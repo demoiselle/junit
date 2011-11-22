@@ -41,14 +41,8 @@
 
 	<groupId>br.gov.frameworkdemoiselle.component</groupId>
 	<artifactId>demoiselle-junit-build</artifactId>
-	<version>2.2.1-SNAPSHOT</version>
+	<version>2.2.2-SNAPSHOT</version>
 	<packaging>pom</packaging>
-
-	<name>Demoiselle JUnit Component Build</name>
-	<description>
-		A liberação de versões deste componente deve ser feita a partir deste build, que fará automaticamente o build
-		de todos os artefatos com versionamento sincronizado. Jamais gere uma versão deste componente sem utilizar este build.
-	</description>
 
 	<parent>
 		<groupId>br.gov.frameworkdemoiselle</groupId>
@@ -57,13 +51,27 @@
 		<relativePath>../build/parent/build/pom.xml</relativePath>
 	</parent>
 
+	<name>Demoiselle JUnit Component Build Aggregator</name>
+	<description>
+		A liberação de versões deste componente deve ser feita a partir deste build, que fará automaticamente o build
+		de todos os artefatos com versionamento sincronizado. Jamais gere uma versão deste componente sem utilizar este build.
+	</description>
+
 	<modules>
 		<module>impl</module>
 		<module>parent</module>
+		<module>documentation</module>
 	</modules>
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-site-plugin</artifactId>
+				<configuration>
+					<skip>false</skip>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-release-plugin</artifactId>
@@ -96,7 +104,7 @@
 
 	<properties>
 		<project.id>junit</project.id>
-		<project.nextVersion>2.2.2-SNAPSHOT</project.nextVersion>
+		<project.nextVersion>2.2.3-SNAPSHOT</project.nextVersion>
 	</properties>
 </project>
 

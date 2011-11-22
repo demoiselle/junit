@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!--
  Demoiselle Framework
  Copyright (C) 2010 SERPRO
@@ -42,28 +41,26 @@
 		<src>images/logo-l.png</src>
 		<href>${project.url}</href>
 	</bannerLeft>
-	
+
 	<bannerRight>
 		<src>images/logo-r.png</src>
 	</bannerRight>
-	
-	<publishDate position="left" format="dd/MM/yyyy hh:mm:ss a"/>
-	
-	<version position="left"/>
-	
+
+	<publishDate position="left" format="dd/MM/yyyy hh:mm:ss a" />
+
+	<version position="left" />
+
 	<poweredBy>
-	    <logo name="SERPRO" href="http://www.serpro.gov.br"
-	          img="http://www.serpro.gov.br/logo.gif"/>
-  	</poweredBy>
-	
+		<logo name="SERPRO" href="http://www.serpro.gov.br" img="http://www.serpro.gov.br/logo.gif" />
+	</poweredBy>
+
 	<skin>
 		<groupId>br.gov.frameworkdemoiselle.component</groupId>
 		<artifactId>demoiselle-default-skin</artifactId>
 		<version>2.0.1</version>
 	</skin>
-	
+
 	<body>
-	
 		<links>
 			<item name="Projeto" href="http://sourceforge.net/projects/demoiselle" />
 			<item name="Portal" href="http://www.frameworkdemoiselle.gov.br" />
@@ -74,9 +71,5 @@
 			<item name="Documentação" href="http://demoiselle.sf.net/docs" />
 			<item name="Notas de Versão" href="release-notes.html" />
 		</menu>
-		
-		<menu ref="reports"/>
-		
 	</body>
-	
 </project>
