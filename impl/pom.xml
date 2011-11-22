@@ -40,17 +40,16 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>demoiselle-junit</artifactId>
-	<version>2.2.2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<parent>
 		<groupId>br.gov.frameworkdemoiselle.component</groupId>
-		<artifactId>demoiselle-component-parent</artifactId>
-		<version>2.0.7</version>
-		<relativePath>../demoiselle-component-parent/pom.xml</relativePath>
+		<artifactId>demoiselle-junit-parent</artifactId>
+		<version>2.2.1-SNAPSHOT</version>
+		<relativePath>../parent/pom.xml</relativePath>
 	</parent>
 
-	<name>junit Component</name>
+	<name>JUnit Component</name>
 	<description />
 
 	<properties>
@@ -65,59 +64,13 @@
 		<dependency>
 			<groupId>br.gov.frameworkdemoiselle</groupId>
 			<artifactId>demoiselle-se</artifactId>
-		</dependency>		
+		</dependency>
 	</dependencies>
-
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>wagon-maven-plugin</artifactId>
-				<version>${wagon-maven-plugin}</version>
-				<executions>
-					<execution>
-						<id>upload-portal-info</id>
-						<phase>site-deploy</phase>
-						<goals>
-							<goal>upload</goal>
-						</goals>
-						<configuration>
-							<serverId>demoiselle.sourceforge.net</serverId>
-							<fromDir>${basedir}/target/site/portal</fromDir>
-							<url>${site.shell.url}/${project.artifactId}</url>
-							<toDir />
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
-
-	<scm>
-		<connection>scm:svn:http://demoiselle.svn.sourceforge.net/svnroot/demoiselle/component/trunk/demoiselle-junit</connection>
-		<developerConnection>scm:svn:https://demoiselle.svn.sourceforge.net/svnroot/demoiselle/component/trunk/demoiselle-junit</developerConnection>
-		<url>scm:svn:http://demoiselle.svn.sourceforge.net/viewvc/demoiselle/component/trunk/demoiselle-junit</url>
-	</scm>
-
-	<!-- Distribuição do projeto -->
-	<distributionManagement>
-		<site>
-			<id>demoiselle.sourceforge.net</id>
-			<!-- O padrão para garantir o histório de sites é  <nome do componente>/<versao> -->
-			<url>${site.shell.url}/${project.artifactId}/${project.version}</url>
-		</site>
-	</distributionManagement>
 
 	<repositories>
 		<repository>
 			<id>demoiselle.sourceforge.net</id>
 			<url>http://demoiselle.sourceforge.net/repository/release</url>
 		</repository>
-		<repository>
-			<id>demoiselle.sourceforge.net-snapshot</id>
-			<url>http://demoiselle.sourceforge.net/repository/snapshot</url>
-		</repository>
 	</repositories>
-
 </project>
-
