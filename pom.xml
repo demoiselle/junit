@@ -70,6 +70,7 @@
 				<artifactId>maven-site-plugin</artifactId>
 				<configuration>
 					<skip>false</skip>
+					<skipDeploy>false</skipDeploy>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -94,6 +95,13 @@
 		</plugins>
 	</build>
 
+	<distributionManagement>
+		<site>
+			<id>demoiselle.sourceforge.net</id>
+			<url>${site.url}</url>
+		</site>
+	</distributionManagement>
+
 	<repositories>
 		<repository>
 			<id>demoiselle.sourceforge.net</id>
@@ -103,7 +111,8 @@
 	</repositories>
 
 	<properties>
-		<project.id>junit</project.id>
+		<project.alias>junit</project.alias>
+		<site.context>component/demoiselle-${project.alias}</site.context>
 		<project.nextVersion>2.2.3-SNAPSHOT</project.nextVersion>
 	</properties>
 </project>
