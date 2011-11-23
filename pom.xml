@@ -46,9 +46,9 @@
 
 	<parent>
 		<groupId>br.gov.frameworkdemoiselle</groupId>
-		<artifactId>demoiselle-build-parent</artifactId>
+		<artifactId>demoiselle-component-build-parent</artifactId>
 		<version>1-SNAPSHOT</version>
-		<relativePath>../build/parent/build/pom.xml</relativePath>
+		<relativePath>../build/parent/component/pom.xml</relativePath>
 	</parent>
 
 	<name>Demoiselle JUnit Component Build Aggregator</name>
@@ -112,7 +112,6 @@
 
 	<properties>
 		<project.alias>junit</project.alias>
-		<site.context>component/demoiselle-${project.alias}</site.context>
 		<project.nextVersion>2.2.3-SNAPSHOT</project.nextVersion>
 	</properties>
 </project>
