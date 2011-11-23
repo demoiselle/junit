@@ -48,7 +48,7 @@
 		<groupId>br.gov.frameworkdemoiselle</groupId>
 		<artifactId>demoiselle-component-build-parent</artifactId>
 		<version>1-SNAPSHOT</version>
-		<relativePath>../internal/parent/component/pom.xml</relativePath>
+		<relativePath>../internal/parent/build/component/pom.xml</relativePath>
 	</parent>
 
 	<name>Demoiselle JUnit Component Build Aggregator</name>
@@ -65,26 +65,6 @@
 
 	<build>
 		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-site-plugin</artifactId>
-				<configuration>
-					<skip>false</skip>
-					<skipDeploy>false</skipDeploy>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-release-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-assembly-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>wagon-maven-plugin</artifactId>
-			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-deploy-plugin</artifactId>
@@ -112,6 +92,7 @@
 
 	<properties>
 		<project.alias>junit</project.alias>
+		<category>Teste</category>
 		<project.nextVersion>2.2.3-SNAPSHOT</project.nextVersion>
 	</properties>
 </project>
