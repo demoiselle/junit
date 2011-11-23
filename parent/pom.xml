@@ -46,9 +46,9 @@
 
 	<parent>
 		<groupId>br.gov.frameworkdemoiselle</groupId>
-		<artifactId>demoiselle-root-parent</artifactId>
+		<artifactId>demoiselle-parent</artifactId>
 		<version>1-SNAPSHOT</version>
-		<relativePath>../../build/parent/root/pom.xml</relativePath>
+		<relativePath>../../internal/parent/demoiselle/pom.xml</relativePath>
 	</parent>
 
 	<name>Demoiselle JUnit Parent</name>
