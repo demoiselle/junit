@@ -59,7 +59,6 @@
 
 	<modules>
 		<module>impl</module>
-		<module>parent</module>
 		<module>documentation</module>
 	</modules>
 

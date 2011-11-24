@@ -39,14 +39,16 @@
 
 	<modelVersion>4.0.0</modelVersion>
 
+	<groupId>br.gov.frameworkdemoiselle.component</groupId>
 	<artifactId>demoiselle-junit</artifactId>
+	<version>2.2.2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<parent>
-		<groupId>br.gov.frameworkdemoiselle.component</groupId>
-		<artifactId>demoiselle-junit-parent</artifactId>
-		<version>2.2.2-SNAPSHOT</version>
-		<relativePath>../parent/pom.xml</relativePath>
+		<groupId>br.gov.frameworkdemoiselle</groupId>
+		<artifactId>demoiselle-parent</artifactId>
+		<version>1-SNAPSHOT</version>
+		<relativePath>../../internal/parent/demoiselle/pom.xml</relativePath>
 	</parent>
 
 	<name>Demoiselle JUnit Component</name>
@@ -55,6 +57,15 @@
 	<properties>
 		<category>Teste</category>
 	</properties>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
 
 	<dependencies>
 		<dependency>
