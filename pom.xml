@@ -67,6 +67,10 @@
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-deploy-plugin</artifactId>
 				<configuration>
 					<skip>true</skip>
@@ -96,4 +100,3 @@
 		<project.nextVersion>2.2.3-SNAPSHOT</project.nextVersion>
 	</properties>
 </project>
-
