@@ -1,0 +1,116 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="exclusao">
+
+	<title>Exclusão dos dados armazenados</title>
+
+	<section>
+		<title>Exclusão de mensagens</title>
+		<para>
+			No diretório de testes <filename>src/test/java</filename>, modifique a classe
+			<literal>Tuiter</literal>, inserindo as linhas indicadas a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class Tuiter {
+
+	public static void main(String[] args) {
+		...
+		app.removerMensagem();
+	}
+	
+	private void removerMensagem() {
+
+		System.out.println("\nRemovendo última mensagem da nice:");
+		LinhaUsuario linha = null;
+		List<LinhaUsuario> lus = linhaUsuarioDAO.getByPrimaryKey("nice");
+		if (lus != null && !lus.isEmpty()) {
+			linha = lus.get(lus.size() - 1);
+		}
+
+		if (linha != null) {
+			String id = linha.getMensagem().toString();
+			Mensagem msg = mensagemDAO.get(id);
+			System.out.println("- " + msg);
+			mensagemDAO.delete(id);
+			linhaUsuarioDAO.delete(linha);
+		}
+	}
+	
+}]]></programlisting>
+	</section>
+
+	<section>
+		<title>Execução de testes e verificação</title>
+		<para>
+			Rode a classe <literal>Tuiter</literal> como uma aplicação Java. Na visão
+			<guimenu>Console</guimenu> da IDE Eclipse, verifique as linhas exibidas.
+		</para>
+		<para>
+			Veja um exemplo de saída dessa aplicação:
+		</para>
+		<programlisting><![CDATA[Linha de usuário da nice:
+- Mensagem [id=6846418579, usuario=nice, texto=Workshop de uso do @Cassandra! #88]
+- Mensagem [id=6680684032, usuario=nice, texto=Workshop de uso do @Cassandra! #2]
+- Mensagem [id=9051150005, usuario=nice, texto=Workshop de uso do @Cassandra! #27]
+- Mensagem [id=2168359317, usuario=nice, texto=Workshop de uso do @Cassandra! #37]
+
+Removendo última mensagem da nice:
+- Mensagem [id=6846418579, usuario=nice, texto=Workshop de uso do @Cassandra! #88]]]></programlisting>
+	</section>
+
+	<section>
+		<title>Abandono de seguidores</title>
+		<para>
+			No diretório de testes <filename>src/test/java</filename>, modifique a classe
+			<literal>Tuiter</literal>, inserindo as linhas indicadas a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class Tuiter {
+
+	public static void main(String[] args) {
+		...
+		app.desseguirUsuario();
+	}
+	
+	private void desseguirUsuario() {
+		
+		System.out.println("\nUsuário iara deixará de seguir nice");
+		Influencia inf = new Influencia();
+		inf.setSeguido("nice");
+		inf.setSeguidor("iara");
+		influenciaDAO.delete(inf);
+	}
+	
+}]]></programlisting>
+	</section>
+
+	<section>
+		<title>Reexecução de testes e verificação</title>
+		<para>
+			Rode novamente a classe <literal>Tuiter</literal>. Em seguida, abra um cliente do
+			Apache Cassandra e verifique a remoção dos valores nas famílias de colunas
+			<literal>Following</literal> e <literal>Followers</literal> no keyspace
+			<literal>Twitter</literal>.
+		</para>
+		<para>
+			Exclusão de seguido na coluna <literal>Following</literal>:
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="images/gui-exclusao1.png" align="center" scalefit="1" width="75%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="images/gui-exclusao1.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+			Exclusão de seguidor na coluna <literal>Followers</literal>:
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="images/gui-exclusao2.png" align="center" scalefit="1" width="75%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="images/gui-exclusao2.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</para>
+	</section>
+	
+</chapter>

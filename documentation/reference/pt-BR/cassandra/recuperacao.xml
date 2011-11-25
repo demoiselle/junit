@@ -1,0 +1,129 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="recuperacao">
+
+	<title>Recuperação dos dados armazenados</title>
+
+	<section>
+		<title>Sobrescrita de métodos toString()</title>
+		<para>
+			No pacote <literal>br.gov.frameworkdemoiselle.sample.tuiter.domain</literal>, modifique
+			a classe <literal>Usuario</literal> incluindo as linhas a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@Override
+public String toString() {
+	return "Usuario [login=" + login + ", nome=" + nome + ", senha=" + senha +
+			", ativo=" + ativo + ", idade=" + idade + ", peso=" + peso + "]";
+}]]></programlisting>
+		<para>
+			No mesmo pacote, modifique a classe <literal>Mensagem</literal> incluindo essas linhas:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@Override
+public String toString() {
+	return "Mensagem [id=" + id + ", usuario=" + usuario + ", texto=" + texto + "]";
+}]]></programlisting>
+	</section>
+
+	<section>
+		<title>Classe de testes Tuiter</title>
+		<para>
+			No diretório de testes <filename>src/test/java</filename>, modifique a classe
+			<literal>Tuiter</literal>, inserindo as linhas indicadas a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class Tuiter {
+
+	public static void main(String[] args) {
+		...
+		app.listarMensagens();
+	}
+
+	private void listarMensagens() {
+		
+		System.out.println("Dados do chico:");
+		Usuario usuario = usuarioDAO.get("chico");
+		System.out.println("- " + usuario);
+		
+		System.out.println("\nSeguidores da nice:");
+		List<String> seguidores = influenciaDAO.listarSeguidores("nice");
+		for (String login : seguidores) {
+			System.out.println("- " + login);
+		}
+		System.out.println("Dados dos seguidores:");
+		List<Usuario> usuarios = usuarioDAO.get(seguidores);
+		for (Usuario u : usuarios) {
+			System.out.println("- " + u);
+		}
+		
+		System.out.println("\nSeguidos pelo chico:");
+		List<String> seguidos = influenciaDAO.listarSeguidos("chico");
+		for (String login : seguidos) {
+			System.out.println("- " + login);
+		}
+		System.out.println("Dados dos seguidos:");
+		usuarios = usuarioDAO.get(seguidos);
+		for (Usuario u : usuarios) {
+			System.out.println("- " + u);
+		}
+		
+		System.out.println("\nLinha de tempo da iara:");
+		List<String> ids = linhaTempoDAO.listarMensagens("iara");
+		List<Mensagem> msgs = mensagemDAO.get(ids);
+		for (Mensagem m : msgs) {
+			System.out.println("- " + m);
+		}
+
+		System.out.println("\nLinha de usuário da nice:");
+		ids = linhaUsuarioDAO.listarMensagens("nice");
+		msgs = mensagemDAO.get(ids);
+		for (Mensagem m : msgs) {
+			System.out.println("- " + m);
+		}
+	}
+	
+}]]></programlisting>
+	</section>
+
+	<section>
+		<title>Execução de testes e verificação</title>
+		<para>
+			Rode a classe <literal>Tuiter</literal> como uma aplicação Java. Na visão
+			<guimenu>Console</guimenu> da IDE Eclipse, verifique as linhas exibidas.
+		</para>
+		<para>
+			Veja um exemplo de saída dessa aplicação:
+		</para>
+		<programlisting><![CDATA[Dados do chico:
+- Usuario [login=chico, nome=Francisco Filho, senha=secreta123, ativo=true, idade=35, peso=82.75]
+
+Seguidores da nice:
+- chico
+- iara
+Dados dos seguidores:
+- Usuario [login=iara, nome=Iara Firmino, senha=null, ativo=false, idade=null, peso=null]
+- Usuario [login=chico, nome=Francisco Filho, senha=secreta123, ativo=true, idade=35, peso=82.75]
+
+Seguidos pelo chico:
+- iara
+- nice
+Dados dos seguidos:
+- Usuario [login=nice, nome=Eunice Santos, senha=seilah456, ativo=false, idade=30, peso=67.42]
+- Usuario [login=iara, nome=Iara Firmino, senha=null, ativo=false, idade=null, peso=null]
+
+Linha de tempo da iara:
+- Mensagem [id=8592066862, usuario=nice, texto=Workshop de uso do @Cassandra! #9]
+- Mensagem [id=9100445145, usuario=nice, texto=Workshop de uso do @Cassandra! #38]
+- Mensagem [id=2629604757, usuario=nice, texto=Workshop de uso do @Cassandra! #20]
+- Mensagem [id=8190055171, usuario=nice, texto=Workshop de uso do @Cassandra! #77]
+- Mensagem [id=6306832822, usuario=nice, texto=Workshop de uso do @Cassandra! #9]
+- Mensagem [id=5149460873, usuario=nice, texto=Workshop de uso do @Cassandra! #12]
+- Mensagem [id=3602042261, usuario=nice, texto=Workshop de uso do @Cassandra! #16]
+
+Linha de usuário da nice:
+- Mensagem [id=9100445145, usuario=nice, texto=Workshop de uso do @Cassandra! #38]
+- Mensagem [id=2629604757, usuario=nice, texto=Workshop de uso do @Cassandra! #20]
+- Mensagem [id=8190055171, usuario=nice, texto=Workshop de uso do @Cassandra! #77]
+- Mensagem [id=3602042261, usuario=nice, texto=Workshop de uso do @Cassandra! #16]]]></programlisting>
+	</section>
+
+</chapter>

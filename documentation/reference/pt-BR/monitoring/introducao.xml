@@ -1,0 +1,172 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="monitoring-introducao">
+
+	<title>Introdução ao Monitoring</title>
+	
+	<para>
+		Num ambiente onde aplicações são disponibilizadas em inúmeros servidores heterogêneos,
+		um dos maiores desafios técnicos é prover - de forma padronizada e confiável - a monitoração
+		constante dos recursos que elas oferecem.
+	</para>
+	<para>
+		A monitoração de uma aplicação, serviço ou servidor pode ser motivada para fins como:
+		disponibilidade, performance, segurança ou mesmo requisitos de negócio. Por exemplo, uma
+		determinada aplicação crítica deve estar sempre no ar e com um tempo de resposta aceitável,
+		além de estar protegida contra tentativas de invasão.
+	</para>
+	<para>
+		Alguns indicadores, tais como a quantidade de documentos emitidos por hora ou o número de
+		transações efetuadas por minuto, podem ser coletados em intervalos regulares a pedido do
+		cliente ou ainda para fins de tarifação (billing).
+	</para>
+	<para>
+		Em se tratando de uma solução robusta e profissional, existem tecnologias altamente
+		avançadas e direcionadas para monitoração: os ditos NMS (Network Management Systems),
+		sendo o Zabbix uma dessas opções. Entretanto, para fazer uso destes servidores de monitoração,
+		é preciso dispor de um esforço adicional da equipe de desenvolvimento para codificar rotinas
+		complexas e transversais à aplicação final. Estas rotinas poderiam não garantir o melhor
+		desempenho para a monitoração e fatalmente seriam construídas novamente a cada necessidade de
+		monitoração de uma nova aplicação.
+	</para>
+	<para>
+		Baseando-se no SNMP, o protocolo padrão para o gerenciamento de serviços de rede, e na
+		especificação JMX para lidar com gerenciamento de modo genérico em Java, foi criado o
+		componente <emphasis>Demoiselle Monitoring</emphasis>. Ele traz mecanismos que possibilitam
+		a qualquer aplicação desenvolvida na linguagem Java a monitoração de seus indicadores nas
+		duas modalidades existentes: polling e trapping.
+	</para>
+	
+	<section>
+		<title>Modalidades de monitoração: polling e trapping</title>
+		<para>
+			Um NMS
+			<footnote>
+				<para>
+					<emphasis>Network Management System</emphasis>: sistema que monitora e
+					controla os dispositivos gerenciados em uma rede.
+				</para>
+			</footnote>
+			é capaz de monitorar hosts e serviços de duas maneiras: via polling ou trapping.
+		</para>
+		<para>
+			O método <emphasis>polling</emphasis> (também conhecido como <emphasis>pull</emphasis>
+			ou <emphasis>active check</emphasis>) é o mais utilizado da monitoração. Tem a vantagem
+			de manter a configuração centralizada no NMS e é executado por este em intervalos
+			regulares ou sob demanda quando necessário. No polling a requisição parte do servidor
+			NMS em direção ao host monitorado.
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="monitoring/images/arch-polling.png" align="center" scalefit="1" width="45%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="monitoring/images/arch-polling.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</para>
+		<para>
+			Por outro lado, o método <emphasis>trapping</emphasis> (também chamado de
+			<emphasis>push</emphasis> ou <emphasis>passive check</emphasis>) são eventos
+			iniciados e efetuados por processos ou aplicações externas, tendo seus resultados
+			submetidos ao NMS para processamento. Ou seja, no trapping a requisição parte do
+			host monitorado em direção ao servidor NMS.
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="monitoring/images/arch-trapping.png" align="center" scalefit="1" width="45%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="monitoring/images/arch-trapping.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</para>
+		<para>
+			O modo trapping é útil na monitoração de serviços que:
+			<itemizedlist>
+				<listitem>
+					sejam assíncronos em sua natureza e que não podem ser monitorados
+					efetivamente através de polling de forma agendada e regular;
+				</listitem>
+				<listitem>
+					estejam localizados atrás de um firewall e por isso não podem ser
+					verificados de forma ativa pelo servidor de monitoração.
+				</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			Exemplos de serviços assíncronos que são monitorados de forma passiva incluem
+			traps SNMP e alertas de segurança - não podemos saber quantos (se algum) alertas
+			ou traps serão recebidos durante um intervalo de tempo, portanto não é factível
+			monitorar seu estado, por exemplo, a cada alguns minutos.
+		</para>
+		<tip>
+			<para>
+				Método <emphasis>polling</emphasis> (ou pull ou active check):
+				<itemizedlist>
+					<listitem>
+						Coleta iniciada pelo servidor em intervalos regulares
+					</listitem>
+					<listitem>
+						Configuração centralizada
+					</listitem>
+					<listitem>
+						Resposta enviada por um agente
+					</listitem>
+				</itemizedlist>
+			</para>
+		</tip>
+		<tip>
+			<para>
+				Método <emphasis>trapping</emphasis> (ou push ou passive check):
+				<itemizedlist>
+					<listitem>
+						Evento iniciado pelo host monitorado
+					</listitem>
+					<listitem>
+						Notificações e mensagens tempestivas
+					</listitem>
+					<listitem>
+						Requisição proveniente de um trapper
+					</listitem>
+				</itemizedlist>
+			</para>
+		</tip>
+	</section>
+	
+	<section>
+		<title>Sobre o componente Demoiselle Monitoring</title>
+		<para>
+			O componente <emphasis>Demoiselle Monitoring</emphasis> fornece duas abordagens de
+			monitoração do tipo <emphasis>polling</emphasis> e <emphasis>trapping</emphasis> para as
+			aplicações desenvolvidas em Java: através de <emphasis>agente e trapper SNMP</emphasis>
+			ou de <emphasis>agente e trapper ZABBIX</emphasis>.
+		</para>
+		<important>
+			<para>
+				Os agentes e trappers são codificados inteiramente em Java e não fazem uso de binários
+				externos (ex: <filename>snmptrap</filename> ou <filename>zabbix_sender</filename>).
+			</para>
+		</important>
+		<para>
+			Do ponto de vista fundamental, a abordagem usando o protocolo SNMP é a mais adequada,
+			especialmente por oferecer a possibilidade de os indicadores serem coletados por qualquer
+			cliente desse protocolo, além do que SNMP é o protocolo padrão para o gerenciamento de
+			recursos de rede e serviços. A ideia de hierarquizar os recursos na árvore de serviços do
+			SNMP (i.e. MIB Tree) torna-se obrigatória, o que pode contribuir para uma melhor
+			organização dessa monitoração.
+		</para>
+		<para>
+			Ao se optar pela abordagem Zabbix, apenas servidores deste tipo poderão consumir os
+			indicadores expostos pelo agente. Por outro lado, a máquina virtual (JVM) pode ser
+			configurada para exportar via interface JMX os MBeans registrados nela, os quais podem
+			ser reutilizados em outras suítes.
+		</para>
+		<tip>
+			<para>
+				É possível utilizar na mesma aplicação todas abordagens de monitoração
+				disponibilizadas pelo componente: JMX, SNMP e Zabbix.
+			</para>
+		</tip>
+	</section>
+	
+</chapter>

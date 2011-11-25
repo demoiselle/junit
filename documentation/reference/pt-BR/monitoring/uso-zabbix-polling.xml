@@ -1,0 +1,354 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="monitoring-zabbix-polling">
+
+	<title>Monitorando via Zabbix (polling)</title>
+	<para>
+		A abordagem específica Zabbix no <emphasis>Demoiselle Monitoring</emphasis> envolve a
+		criação e disponibilização de componentes básicos em Java, os MBeans, tal como na monitoração
+		com SNMP. No próprio servidor Java será levantado um <emphasis>Agente Zabbix</emphasis>
+		na porta 10052 em TCP. 
+	</para>
+	<note>
+		<para>
+			O <emphasis>Agente Zabbix</emphasis> não se trata de um agente Zabbix convencional, como
+			o daemon <ulink url="http://www.zabbix.com/documentation/1.8/manual/processes/zabbix_agentd">zabbix_agentd</ulink>.
+			É apenas um programa que entende o protocolo do Zabbix e responde às requisições enviadas
+			pelo servidor.
+		</para>
+	</note>
+
+	<section>
+		<title>Configuração do Agente Zabbix</title>
+		<para>
+			Para habilitar o <emphasis>Agente Zabbix</emphasis> e definir seus parâmetros, altere o
+			arquivo <filename>demoiselle.properties</filename> incluindo as linhas a seguir:
+		</para>
+		<programlisting role="PROPERTIES"><![CDATA[frameworkdemoiselle.monitoring.zabbix.agent.enabled = true
+frameworkdemoiselle.monitoring.zabbix.agent.port = 10052
+frameworkdemoiselle.monitoring.zabbix.agent.address = *
+frameworkdemoiselle.monitoring.zabbix.agent.protocol = 1.4]]></programlisting>
+		<para>
+			Tendo definidos esses parâmetros, ao executar a aplicação o
+			<emphasis>Agente Zabbix</emphasis> será automaticamente inicializado.
+		</para>
+	</section>
+
+	<section>
+		<title>Criação do MBean para o Zabbix</title>
+		<para>
+			Uma vez devidamente configurado o <emphasis>Agente Zabbix</emphasis>, os indicadores
+			do host monitorado a serem disponibilizados por ele devem ser criadas pelo desenvolvedor.
+			Veremos como fazer isso nessa seção. Primeiramente é preciso criar uma interface simples
+			contendo os métodos a serem expostos, tal como no exemplo:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public interface ExemploMBean {
+
+	String getAtributo();
+
+}]]></programlisting>
+		<para>
+			Em seguida, uma classe anotada com o estereótipo <literal>@MBean</literal> deve
+			implementar os métodos dessa interface:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@MBean
+public class Exemplo implements ExemploMBean {
+
+   public String getAtributo() {
+      return "valor do atributo";
+   }
+
+}]]></programlisting>
+		<important>
+			<para>
+				Lembre-se de que a classe deve implementar uma interface de mesmo nome
+				acrescida do sufixo <quote><literal>MBean</literal></quote>.
+			</para>
+		</important>
+		<tip>
+			<para>
+				A anotação <literal>@MBean</literal> é fornecida pelo componente e encontra-se
+				no pacote <literal>br.gov.frameworkdemoiselle.monitoring.stereotype</literal>.
+			</para>
+		</tip>
+		<para>
+			As regras e recomendações para a criação de um MBean para o Agente Zabbix são exatamente
+			as mesmas aplicadas na seção <link linkend="monitoring-jmx" endterm="monitoring-jmx.title"/>.
+		</para>
+	</section>
+	
+	<section>
+		<title>Consultando os indicadores do Agente Zabbix</title>
+		<para>
+			Tendo o <emphasis>Agente Zabbix</emphasis> levantado e MBeans devidamente exportados no
+			servidor Java, podemos consultar os indicadores do host através do protocolo Zabbix.
+			Na prática isso será feito pelo servidor Zabbix (especificamente pelo daemon
+			<ulink url="http://www.zabbix.com/documentation/1.8/manual/processes/zabbix_server">zabbix_server</ulink>).
+			Entretanto, podemos utilizar o comando <command>telnet</command>
+			<footnote>
+				<para>
+					Para maiores informações sobre o <command>telnet</command>, acesse:
+					<ulink url="http://en.wikipedia.org/wiki/Telnet"/>
+				</para>
+			</footnote>
+			para testar o funcionamento do agente e obter o valor do indicador no host. Veja:
+		</para>
+		<para>
+			Primeiro execute a instrução <command>telnet localhost 10052</command>. Em seguida digite
+			a linha <quote><literal>jmx[br.gov.frameworkdemoiselle.monitoring.mbean:name=Exemplo][Atributo]</literal></quote>
+			e pressione <keycap>ENTER</keycap>. A comunicação será encerrada, porém o valor do atributo
+			<literal>Atributo</literal> do MBean de nome <literal>Exemplo</literal> será exibido no terminal. Veja:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ telnet localhost 10052
+Trying ::1...
+Connected to localhost.
+Escape character is '^]'.
+jmx[br.gov.frameworkdemoiselle.monitoring.mbean:name=Exemplo][Atributo]
+ZBXD^Avalor do atributoConnection closed by foreign host.]]></programlisting>
+		<para>
+			O protocolo do Zabbix permite que múltiplas consultas a indicadores sejam efetuadas numa
+			mesma requisição. A string <quote><literal>ZBXD</literal></quote> faz parte do protocolo.
+		</para>
+		<tip>
+			<para>
+				No <emphasis>Debian GNU/Linux</emphasis> é disponibilizado o pacote <literal>telnet</literal>
+				(<ulink url="http://packages.debian.org/telnet/"/>), o qual fornece o comando de mesmo nome
+				a ser usado para se comunicar com outro host através do protocolo TELNET. Para instalar
+				esse pacote, basta executar <command>apt-get install telnet</command> como super-usuário.
+			</para>
+		</tip>
+		<para>
+			Quando o <emphasis>Agente Zabbix</emphasis> recebe uma requisição vinda de um host com o
+			formato <quote><literal>jmx[nome-do-mbean][atributo]</literal></quote>, ele busca dentro
+			da mesma máquina virtual (JVM) um MBean pré-registrado no respectivo contêiner JMX com
+			o nome especificado. Se ele o encontrar, fará a requisição JMX do atributo informado,
+			provocando desta maneira a execução do seu respectivo método <emphasis>getter</emphasis>.
+		</para>
+		<para>
+			Ao configurar o host monitorado na interface do Zabbix, utilize o formato citado acima
+			no campo <literal>Key</literal> do indicador (i.e., <emphasis>item</emphasis>).
+		</para>
+		<important>
+			<para>
+				Para o <emphasis>Agente Zabbix</emphasis> um indicador de host (i.e., <emphasis>host item</emphasis>)
+				é internamente um atributo de MBean registrado na mesma JVM em que ele roda. O agente fornece a
+				consulta a esse atributo por meio do protocolo Zabbix obedecendo ao seguinte formato:
+				<quote><literal>jmx[nome-do-mbean][atributo]</literal></quote>.
+			</para>
+		</important>
+	</section>
+
+	<section>
+		<title>Uma monitoração mais complexa</title>
+		<para>
+			Veremos agora um caso prático, onde uma aplicação de gestão escolar precisa fornecer
+			monitoração sobre indicadores de negócio e de sistema. A proposta é fornecer diversos
+			indicadores de negócio da aplicação através do <emphasis>Agente Zabbix</emphasis>
+			provido pelo componente <emphasis>Demoiselle Monitoring</emphasis>. Posteriormente
+			esses mesmos indicadores (i.e., <emphasis>Items</emphasis>) poderão ser configurados
+			para um determinado dispositivo (i.e., <emphasis>Host</emphasis>) no servidor Zabbix.
+		</para>
+		<para>
+			O primeiro passo é criar a interface em Java contendo todos os métodos referentes aos
+			indicadores a serem exportados. Lembre-se de usar o sufixo
+			<quote><literal>MBean</literal></quote>:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public interface EscolaMonitoringMBean {
+
+	String getVersaoAplicacao();
+
+	int getQtdTurmasIncluidas();
+
+	long getQtdAlunosMatriculados();
+
+	String getUltimoUsuarioLogado();
+
+	int getNivelLog();
+
+	void setNivelLog(int nivelLog);
+
+}]]></programlisting>
+		<para>
+			Em seguida, crie a classe que implementa a interface anterior. É necessário que ela
+			seja anotada com <literal>@MBean</literal>. Veja:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@MBean
+@Name("br.gov.frameworkdemoiselle:name=Escola")
+public class EscolaMonitoring implements EscolaMonitoringMBean {
+
+	private static final String VERSAO = "2.4.1-BETA";
+	private static final String[] USUARIOS = { "Fulano", "Sicrano", "Beltrano" };
+
+	private int qtdTurmas = 0;
+	private long qtdAlunos = 0;
+
+	@Override
+	public String getVersaoAplicacao() {
+		return VERSAO;
+	}
+
+	@Override
+	public int getQtdTurmasIncluidas() {
+		this.qtdTurmas += (int) (Math.random() * 10);
+		return this.qtdTurmas;
+	}
+
+	@Override
+	public long getQtdAlunosMatriculados() {
+		this.qtdAlunos = (int) (Math.random() * 100) + 100;
+		return this.qtdAlunos;
+	}
+
+	@Override
+	public String getUltimoUsuarioLogado() {
+		int pos = (int) (Math.random() * USUARIOS.length);
+		return USUARIOS[pos];
+	}
+
+	private int nivelLog = 1;
+
+	@Override
+	public int getNivelLog() {
+		return this.nivelLog;
+	}
+
+	@Override
+	public void setNivelLog(int nivelLog) {
+		this.nivelLog = nivelLog;
+	}
+
+}]]></programlisting>
+		<para>
+			Neste caso de exemplo, a classe <literal>EscolaMonitoring</literal> fará com que cinco
+			indicadores sejam disponibilizados via JMX, possibilitando que eles sejam consultados
+			pelo servidor Zabbix. O indicador <function>VersaoAplicacao</function> retornará sempre
+			o mesmo valor de <emphasis>string</emphasis>. Já <function>QtdTurmasIncluidas</function>
+			e <function>QtdAlunosMatriculados</function> retornarão números inteiros que serão
+			incrementados aleatoriamente a cada chamada. O indicador <function>UltimoUsuarioLogado</function>
+			retorna randomicamente um dos três nomes possíveis de usuário. E <function>NivelLog</function>
+			armazena um número que pode ser apenas consultado pelo Zabbix.
+		</para>
+		<note>
+			<para>
+				Na abordagem com o Zabbix os valores dos indicadores somente podem ser consultados,
+				ao contrário do SNMP, que fornece o comando de escrita <literal>SET</literal>.
+			</para>
+		</note>
+		<para>
+			Para testar a classe <literal>EscolaMonitoring</literal> e o <emphasis>Agente Zabbix</emphasis>,
+			execute a aplicação e abra uma sessão TCP com o comando <command>telnet localhost 10052</command>.
+			Em seguida, cole as linhas a seguir e pressione <keycap>ENTER</keycap>: 
+		</para>
+		<programlisting><![CDATA[jmx[br.gov.frameworkdemoiselle:name=Escola][VersaoAplicacao]
+jmx[br.gov.frameworkdemoiselle:name=Escola][QtdAlunosMatriculados]
+jmx[br.gov.frameworkdemoiselle:name=Escola][QtdTurmasIncluidas]
+jmx[br.gov.frameworkdemoiselle:name=Escola][UltimoUsuarioLogado]
+jmx[br.gov.frameworkdemoiselle:name=Escola][NivelLog]]]></programlisting>
+		<para>
+			A sessão <literal>TELNET</literal> será finalizada. Note que chamadas consecutivas ao
+			serviço retornarão valores distintos para alguns dos indicadores, tal como esperado:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ telnet localhost 10052
+Trying ::1...
+Connected to localhost.
+Escape character is '^]'.
+jmx[br.gov.frameworkdemoiselle:name=Escola][VersaoAplicacao]
+jmx[br.gov.frameworkdemoiselle:name=Escola][QtdAlunosMatriculados]
+jmx[br.gov.frameworkdemoiselle:name=Escola][QtdTurmasIncluidas]
+jmx[br.gov.frameworkdemoiselle:name=Escola][UltimoUsuarioLogado]
+jmx[br.gov.frameworkdemoiselle:name=Escola][NivelLog]
+ZBXD^A2.4.1-RC2ZBXD^A^C191ZBXD^A^A8ZBXDBeltranoZBXD^A^A1Connection closed by foreign host.]]></programlisting>
+		<programlisting role="BASH"><![CDATA[$ telnet localhost 10052
+Trying ::1...
+Connected to localhost.
+Escape character is '^]'.
+jmx[br.gov.frameworkdemoiselle:name=Escola][VersaoAplicacao]
+jmx[br.gov.frameworkdemoiselle:name=Escola][QtdAlunosMatriculados]
+jmx[br.gov.frameworkdemoiselle:name=Escola][QtdTurmasIncluidas]
+jmx[br.gov.frameworkdemoiselle:name=Escola][UltimoUsuarioLogado]
+jmx[br.gov.frameworkdemoiselle:name=Escola][NivelLog]
+ZBXD^A2.4.1-RC2ZBXD^A^C122ZBXD^A^B13ZBXD^ASicranoZBXD^A^A1Connection closed by foreign host.]]></programlisting>
+		<para>
+			Os valores dos indicadores consultados via protocolo Zabbix
+			<footnote>
+				<para>
+					Para maiores informações sobre o protocolo Zabbix para agentes, acesse o link
+					<ulink url="http://www.zabbix.com/wiki/doc/tech/proto/zabbixagentprotocol"/>.
+				</para>
+			</footnote>
+			são retornados de uma só vez, contendo a string <quote><literal>ZBXD</literal></quote>
+			como separador, além de caracteres especiais de controle.
+		</para>
+	</section>
+	
+	<section>
+		<title>Configurando a monitoração polling no servidor Zabbix</title>
+		<para>
+			Uma vez criada a classe MBean de monitoração, tendo o Agente Zabbix e a aplicação
+			Java em execução, podemos efetivamente monitorar os indicadores no servidor Zabbix.
+		</para>
+		<para>
+			Crie o <emphasis>Host</emphasis> no Zabbix (no exemplo foi chamado <quote>Armenia Server</quote>),
+			e em seguida crie os <emphasis>Items</emphasis> para ele. O tipo do indicador (campo
+			<literal>Type</literal>) deve ser <quote><literal>Zabbix agent</literal></quote> e a
+			chave (campo <literal>Key</literal>) deve corresponder ao formato
+			<quote><literal>jmx[nome-do-mbean][atributo]</literal></quote>. Veja:
+		</para>
+		<figure>
+			<title>Configuração de indicador no Zabbix</title>
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="monitoring/images/zabbix-item.png" align="center" scalefit="1" width="100%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="monitoring/images/zabbix-item.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</figure>
+		<para>
+			No exemplo, todos os indicadores contidos na classe <literal>EscolaMonitoring</literal>
+			foram incluídos para monitoração pelo servidor Zabbix. Note que eles possuem intervalos
+			de requisição distintos. Por exemplo, a versão da aplicação (<literal>VersaoAplicacao</literal>)
+			é obtida a cada 8640 segundos, ou seja, uma vez ao dia. Já <literal>QtdAlunosMatriculados</literal>
+			e <literal>QtdTurmasIncluidas</literal> são consultadas a cada minuto. Veja:
+		</para>
+		<figure>
+			<title>Configuração de indicadores do host no Zabbix</title>
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="monitoring/images/zabbix-host.png" align="center" scalefit="1" width="100%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="monitoring/images/zabbix-host.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</figure>
+		<important>
+			<para>
+				Na tela de configuração do host, é preciso definir a porta TCP correspondente ao
+				<emphasis>Agente Zabbix</emphasis> fornecido pelo componente
+				<emphasis>Demoiselle Monitoring</emphasis>, que deve diferir do default
+				<literal>10050</literal>.
+			</para>
+		</important>
+		<para>
+			Assim que os indicadores começam a ser monitorados e armazenados pelo servidor Zabbix,
+			podemos criar gráficos customizados usando esses valores coletados. Veja um exemplo
+			de plotagem usando os indicadores <literal>QtdAlunosMatriculados</literal> e
+			<literal>QtdTurmasIncluidas</literal> da classe <literal>EscolaMonitoring</literal>:
+		</para>
+		<figure>
+			<title>Geração de gráficos customizados no Zabbix</title>
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="monitoring/images/zabbix-graph.png" align="center" scalefit="1" width="100%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="monitoring/images/zabbix-graph.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</figure>
+	</section>
+	
+</chapter>

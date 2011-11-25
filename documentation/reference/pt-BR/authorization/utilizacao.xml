@@ -1,0 +1,70 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="authorization-utilizacao">
+
+	<title>Arquitetura e Utilização do Authorization</title>
+	
+	<para>
+		A utilização do Demoiselle Authorization não tem qualquer complicação. De fato, a maior parte das tarefas encontra-se na configuração e criação das classes do próprio JAAS. Como não entraremos nestes detalhes 
+		na documentação do componente, resta muito pouco a se fazer.
+	</para>
+	
+	<section>
+		<title>Arquitetura</title>
+		<para>
+			Conforme discutimos no Guia de Referência do Demoiselle, temos duas interfaces básicas para determinar como funciona o controle de acesso: <classname>Authorizer</classname> e 
+			<classname>Authenticator</classname>. O componente Authorization do Demoiselle, como você deve imaginar, implementa estas duas interfaces nas classes <classname>JaasAuthorizer</classname> 
+			e <classname>JaasAuthenticator</classname>.
+		</para>
+		<para>
+			Contudo, o trabalho das instâncias destas classes é bastante simples, pois todo o trabalho é realizado pelo próprio JAAS e que é tratado diretamente pelo container, como o JBoss ou Glassfish. As duas classes
+			estão exemplificadas nas listagens abaixo. Primeiro, a classe JaasAuthorizer, que é simples e não implementa o método <methodname>hasPermission(resource, operation)</methodname> pois não há este mesmo
+			conceito no JAAS. Segundo, temos o método <methodname>hasRole(role)</methodname>, simplesmente delegando.
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class JaasAuthorizer implements Authorizer {
+
+	public boolean hasPermission(String resource, String operation) {
+		throw new DemoiselleException(bundle.getString("permission-not-defined-for-jaas",
+				RequiredRole.class.getSimpleName()));
+	}
+
+	@Override
+	public boolean hasRole(String role) {
+		HttpServletRequest request = Beans.getReference(HttpServletRequest.class);
+		return request.isUserInRole(role);
+	}
+
+}]]></programlisting>
+		<para>
+			Da mesma forma, a classe <classname>JaasAuthenticator</classname> não implementa os métodos <methodname>unAuthenticate()</methodname> 	e <methodname>authenticate()</methodname>, pois
+			isto é realizado diretamente pelo container. O uso destes método acarretará no lançamento de uma exceção do tipo <classname>DemoiselleException</classname>.
+		</para>
+	</section>
+	
+	<section>
+		<title>Utilização</title>
+		<para>
+			A utilização do componente <emphasis>Authorization</emphasis> não altera a forma como você deveria usar normalmente a funcionalidade de segurança do framework Demoiselle. Você continuará anotando 
+			seus métodos que necessitam de controle de acesso com as anotações <classname>@RequiredRole</classname> e <classname>@RequiredPermission</classname>. Entretanto, lembre-se o que discutimos na seção anterior,
+			quando vimos a implementação das interfaces <classname>Authenticator</classname> e <classname>Authorizer</classname>: existem métodos que não são implementados, pois já são feitos diretamente pelo container.
+		</para>
+		<para>
+			Relembrando, não temos a implementação de <methodname>hasPermission(resource, operation)</methodname> em <classname>JaasAuthorizer</classname>. Isto significa que não poderemos usar a anotação
+			<classname>@RequiredPermission</classname>, pois acarretará em uma exceção <classname>DemoiselleException</classname>. Veja abaixo um exemplo de uso e confira mais detalhes de como usar estas anotações
+			na documentação de referência do Demoiselle.
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class ClasseExemplo { 
+
+	@RequiredRole("simpleRoleName") 
+	public void requiredRoleWithSingleRole() { 
+	} 
+
+	@RequiredRole({ "firstRole", "secondRole", "thirdRole", "fourthRole", "fifthRole" }) 
+	public void requiredRoleWithArrayOfRoles() { 
+	} 
+
+}]]></programlisting>
+	</section>
+	
+</chapter>

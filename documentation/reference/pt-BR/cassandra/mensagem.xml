@@ -1,0 +1,95 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="mensagem">
+
+	<title>Gravando as mensagens de texto</title>
+
+	<section>
+		<title>Criação da entidade Mensagem</title>
+		<para>
+			No pacote <literal>br.gov.frameworkdemoiselle.sample.tuiter.domain</literal>, crie a
+			classe <literal>Mensagem</literal> contendo as linhas a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@CassandraEntity(columnFamily = "Tweets")
+public class Mensagem {
+
+	@KeyProperty
+	private Long id;
+	
+	private String usuario;
+	private String texto;
+
+}]]></programlisting>
+	</section>
+
+	<section>
+		<title>Unidade de persistência MensagemDAO</title>
+		<para>
+			No pacote <literal>br.gov.frameworkdemoiselle.sample.tuiter.persistence</literal>, crie a
+			classe <literal>MensagemDAO</literal> contendo as linhas a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class MensagemDAO extends CassandraEntityDAO<Mensagem> {
+}]]></programlisting>
+		<note>
+			<para>
+				A superclasse <literal>CassandraEntityDAO</literal> está contida no pacote
+				<literal>br.gov.frameworkdemoiselle.cassandra</literal>.
+			</para>
+		</note>
+	</section>
+
+	<section>
+		<title>Classe de testes Tuiter</title>
+		<para>
+			No diretório de testes <filename>src/test/java</filename>, modifique a classe
+			<literal>Tuiter</literal>, inserindo as linhas indicadas a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class Tuiter {
+
+	MensagemDAO mensagemDAO;
+
+	public static void main(String[] args) {
+		...
+		app.escreverMensagem();
+	}
+
+	public Tuiter() {
+		...
+		mensagemDAO = new MensagemDAO();
+	}
+	
+	private void escreverMensagem() {
+		final long id = (long) (Math.random() * 1E10);
+		
+		Mensagem msg = new Mensagem();
+		msg.setId(id);
+		msg.setUsuario("nice");
+		msg.setTexto("Workshop de uso do @Cassandra! #" + (int) (Math.random() * 100));
+		mensagemDAO.save(msg);
+	}
+	
+}]]></programlisting>
+	</section>
+
+	<section>
+		<title>Execução de testes e verificação</title>
+		<para>
+			Execute a classe <literal>Tuiter</literal> algumas vezes. Em seguida, abra um
+			cliente do Apache Cassandra e verifique a inclusão dos valores na família de colunas
+			<literal>Tweets</literal> no keyspace <literal>Twitter</literal>.
+		</para>
+		<para>
+			Veja o resultado no aplicativo <emphasis>Cassandra GUI</emphasis>:
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="images/gui-tweets.png" align="center" scalefit="1" width="75%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="images/gui-tweets.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</para>
+	</section>
+
+</chapter>

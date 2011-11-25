@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE part PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<part id="authorization-master">
+
+	<title>Demoiselle Authorization</title>
+
+	<partintro>
+		<para>
+			O Guia de Referência do Demoiselle tratou de forma bem detalhada sobre um importante
+			aspecto presente em grande parte dos sistemas: controle de acesso. Demonstrou as
+			interfaces <classname>Authorizer</classname> e <classname>Authenticator</classname> e
+			como implementá-las para que você crie seu próprio mecanismo de autenticação e autorização.
+			Contudo, é bastante conhecida no mundo Java a especificação do JAAS, acrônimo para
+			Java Authentication and Authorization Service, que provê meios para você realizar este
+			mesmo trabalho em ambientes JEE.
+		</para>
+		<para>
+			O componente Demoiselle Authorization é uma iniciativa que visa permitir a utilização
+			do JAAS, baseado nas interfaces explicitadas no Guia de Referência, na sua aplicação.
+			O objetivo desta documentação é explicar como você pode usar este componente para
+			usufruir do JAAS de forma mais simples. Cabe destacar que não entraremos em detalhes
+			sobre a própria especificação do JAAS, uma vez que existe uma vasta documentação
+			sobre o assunto.
+		</para>
+	</partintro>
+	
+	<!-- capítulos -->
+	<xi:include href="configuracao.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+	<xi:include href="utilizacao.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+	
+</part>

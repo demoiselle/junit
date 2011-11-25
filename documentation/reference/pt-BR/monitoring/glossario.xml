@@ -1,0 +1,238 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE appendix PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<appendix id="monitoring-glossario">
+
+	<title>Conceitos de Monitoração</title>
+
+	<section>
+		<title>NMS</title>
+		<para>
+			Um <emphasis>NMS (Network Management System)</emphasis> ou
+			<emphasis>Sistema de Gerenciamento de Redes</emphasis> é responsável pelas aplicações
+			que monitoram e controlam os dispositivos gerenciados. Normalmente é instalado em um
+			(ou mais de um) servidor de rede dedicado a estas operações de gerenciamento, que
+			recebe informações (i.e. pacotes SNMP) de todos os dispositivos gerenciados daquela rede.
+		</para>
+		<para>
+			Entre os NMS mais populares podemos citar:
+			<itemizedlist>
+				<listitem>
+					<para>
+						ZABBIX: <ulink url="http://www.zabbix.com/"/>
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						Nagios: <ulink url="http://www.nagios.org/"/>
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						Zenoss: <ulink url="http://www.zenoss.com/"/>
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						OpenNMS: <ulink url="http://www.opennms.org/"/>
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	
+	<section>
+		<title>SNMP</title>
+		<para>
+			<emphasis>SNMP (Simple Network Management Protocol)</emphasis> é o protocolo de
+			gerência típico de redes TCP/IP que facilita o intercâmbio de informação entre os
+			dispositivos de rede. Ele possibilita aos administradores de rede gerenciar o
+			desempenho da rede, encontrar e resolver seus eventuais problemas, e fornecer
+			informações para o planejamento de sua expansão, dentre outras.
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="monitoring/images/arch-snmp.png" align="center" scalefit="1" width="70%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="monitoring/images/arch-snmp.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</para>
+		<para>
+			O <quote>simple</quote> do acrônimo SNMP diz respeito ao fato de que as interações
+			entre os dispositivos gerenciados e um servidor não são terrivelmente complexas.
+			Na versão original do protocolo, conhecida como SNMPv1, apenas quatro operações são
+			disponíveis entre o servidor e o dispositivo a ser gerenciado:
+		</para>
+		<table>
+			<title>Operações SNMPv1</title>
+			<tgroup cols="2">
+				<colspec colwidth="25*"/>
+				<colspec colwidth="75*"/>
+				<thead>
+					<row>
+						<entry><emphasis role="bold">Operação</emphasis></entry>
+						<entry><emphasis role="bold">Descrição</emphasis></entry>
+					</row>
+				</thead>
+				<tbody>
+					<row>
+						<entry><literal>GET</literal></entry>
+						<entry>
+							<para>
+								Usada pelo servidor para obter uma única informação do dispositivo
+								gerenciado. Por exemplo, podemos requisitar ao dispositivo o
+								percentual de utilização da CPU.
+								<literal>GET</literal> é uma operação de leitura.
+							</para>
+						</entry>
+					</row>
+					<row>
+						<entry><literal>GETNEXT</literal></entry>
+						<entry>
+							<para>
+								Usada pelo servidor para obter mais de uma informação do dispositivo
+								gerenciado. Por exemplo, podemos requisitar o percentual de utilização
+								da CPU e o uptime do sistema no dispositivo.
+								<literal>GETNEXT</literal> também é uma operação de leitura.
+							</para>
+						</entry>
+					</row>
+					<row>
+						<entry><literal>SET</literal></entry>
+						<entry>
+							<para>
+								Usada pelo servidor para configurar um dispositivo com um valor
+								específico. Por exemplo, para configurar um limiar no dispositivo que
+								dispare um alerta ao servidor toda vez que a utilização de memória
+								atingir 80% para um determinado período de tempo.
+								<literal>SET</literal> é uma operação de escrita.
+							</para>
+						</entry>
+					</row>
+					<row>
+						<entry><literal>TRAP</literal></entry>
+						<entry>
+							<para>
+								Esta operação é diferente de todas as demais, pois ela é invocada pelo
+								dispositivo gerenciado, e não pelo servidor. Uma mensagem do tipo "trap"
+								geralmente é usada para alertar o servidor quando um determinado limiar
+								é atingido ou no caso de ocorrer um erro ou evento de algum tipo
+								específico. Por exemplo, um roteador pode ser configurado para enviar
+								um trap para o servidor assim que a sua utilização média de CPU estiver
+								acima de 70% pelo período de um minuto. Mensagens do tipo trap são ditas
+								assíncronas, no sentido de que o dispositivo gerenciado as envia sem que
+								o servidor as tenha requerido.
+							</para>
+						</entry>
+					</row>
+				</tbody>
+			</tgroup>
+		</table>
+		<para>
+			A segunda versão do protocolo, chamada de SNMPv2, introduziu dois comandos adicionais:
+		</para>
+		<table>
+			<title>Operações SNMPv1</title>
+			<tgroup cols="2">
+				<colspec colwidth="25*"/>
+				<colspec colwidth="75*"/>
+				<thead>
+					<row>
+						<entry><emphasis role="bold">Operação</emphasis></entry>
+						<entry><emphasis role="bold">Descrição</emphasis></entry>
+					</row>
+				</thead>
+				<tbody>
+					<row>
+						<entry><literal>GETBULK</literal></entry>
+						<entry>
+							<para>
+								Esta operação foi implementada para permitir que os servidores obtenham
+								múltiplos pedaços de informação de um dispositivo gerenciado a partir de
+								uma única requisição. Tal como o <literal>GET</literal>, o
+								<literal>GETBULK</literal> se trata de uma operação de leitura.
+							</para>
+						</entry>
+					</row>
+					<row>
+						<entry><literal>INFORM</literal></entry>
+						<entry>
+							<para>
+								Esta operação permite que um dado servidor reencaminhe a outros servidores
+								informações do tipo trap que ele tenha recebido.
+							</para>
+						</entry>
+					</row>
+				</tbody>
+			</tgroup>
+		</table>
+		<para>
+			Além dos novos comandos apresentados, a versão 2 do SNMP oferece uma boa quantidade de
+			melhorias em relação à versão inicial do protocolo, incluindo melhor performance,
+			segurança, confidencialidade, novos tipos de dados e comunicações do tipo
+			gerente-para-gerente.
+		</para>
+		<para>
+			O protocolo SNMP foi projetado para usar UDP como protocolo de transporte, e essa
+			característica faz com que o SNMP seja considerado "leve", uma vez que o overhead
+			do estabelecimento de uma sessão TCP é evitado. Quando um servidor precisa configurar
+			um dispositivo ou coletar informação deste, ele fará uma requisição ao dispositivo
+			através da porta de destino 161 UDP. Como na maioria dos serviços no mundo TCP/IP,
+			a porta de origem geralmente será escolhida dinamicamente.
+		</para>
+		<para>
+			Talvez a funcionalidade mais importante do SNMP de uma perspectiva de monitoração seja
+			a habilidade de um dispositivo gerenciado enviar mensagens do tipo trap para um servidor
+			de forma assíncrona e tempestiva. Mensagens do tipo "trap" iniciadas pelo dispositivo
+			são geralmente enviadas para a porta 162 UDP do servidor.
+		</para>
+		<para>
+			Ao protocolo SNMPv3 foram incluídos três importantes serviços: autenticação,
+			privacidade e controle de acesso, conforme ilustrado no diagrama abaixo:
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="monitoring/images/snmpv3-schema.png" align="center" scalefit="1" width="70%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="monitoring/images/snmpv3-schema.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</para>
+		<para>
+			As implementações do SNMP oferecem suporte para as múltiplas versões existentes
+			(vide <ulink url="http://tools.ietf.org/html/rfc3584">RFC-3584</ulink>),
+			tipicamente SNMPv1, SNMPv2c e SNMPv3.
+		</para>
+	</section>
+	
+	<section>
+		<title>JMX</title>
+		<para>
+			<emphasis>JMX (Java Management Extensions)</emphasis> é uma tecnologia Java que fornece
+			ferramentas para gerenciamento de monitoramento de aplicações, objetos de sistema,
+			dispositivos e redes orientadas a serviço. É uma API que usa o conceito de agentes e
+			com isso permite monitorar elementos da Máquina Virtual Java (JVM) e aplicativos que
+			nela estão sendo executados.
+		</para>
+		<para>
+			Os recursos disponíveis na JMX são representados por objetos chamados
+			<emphasis>MBeans (Managed Beans)</emphasis>, especificamente classes que podem ser
+			dinamicamente carregadas e instanciadas e que podem ser usadas para se obter e ou
+			alterar configurações das aplicações, coleta de estatísticas e notificação de eventos.
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="monitoring/images/arch-jmx.png" align="center" scalefit="1" width="70%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="monitoring/images/arch-jmx.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</para>
+		<para>
+			A JMX proporciona a integração do Java com o NMS e por isso pode ser encarada como um
+			SNMP para aplicações em Java.
+		</para>
+	</section>
+	
+</appendix>

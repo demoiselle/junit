@@ -1,0 +1,107 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="monitoring-checkers">
+
+	<title>Fazendo uso dos Checkers</title>
+	<para>
+		No componente <emphasis>Demoiselle Monitoring</emphasis> os trappers se destinam apenas a
+		enviar as mensagens aos respectivos servidores assim que algum de seus métodos é invocado
+		por alguma parte da aplicação Java. Ou seja, as classes estereotipadas com
+		<literal>@Trapper</literal> não realizam o envio automático e periódico dos indicadores.
+	</para>
+	<important>
+		<para>
+			Os checkers são particularmente essenciais para o envio de informações em intervalos
+			regulares do host monitorado ao servidor. As classes trappers somente enviam mensagens
+			quando um de seus métodos é invocado pela aplicação.
+		</para>
+	</important>
+	
+	<section>
+		<title>Criando e utilizando um Checker</title>
+		<para>
+			Para permitir com que o envio de traps possa ser previamente agendado na aplicação, um outro
+			artefato é necessário: o <emphasis>checker</emphasis>. Ao desenvolvedor resta criar uma classe
+			que deve ser declarada com o estereótipo <literal>@Checker</literal>. Essa classe será
+			instanciada e carregada automaticamente pelo mecanismo do CDI, que também procurará por
+			métodos nela anotados com <literal>@Scheduled</literal>. Nessa anotação será definido o
+			intervalo de repetição para a execução do comando.
+		</para>
+		<para>
+			Eis um exemplo de implementação de checker:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@Checker
+	public class EscolaChecker {
+	
+		@Inject
+		private EscolaTrapper trapper;
+		
+		@Scheduled(interval = 30, unit = TimeUnit.SECONDS)
+		public void checkDatabases() {
+			trapper.sendDatabaseInfo("db1", conn1);
+			trapper.sendDatabaseInfo("db3", conn3);
+		}
+		
+		@Scheduled(interval = 1, unit = TimeUnit.MINUTES)
+		public void checkUsedMemory() {
+			trapper.sendHeapMemoryUsed();
+		}
+		
+	}]]></programlisting>
+		<para>
+			Ou seja, o estereótipo <literal>@Checker</literal> indica que a classe conterá métodos
+			agendados. Estes devem ser anotados com <literal>@Scheduled</literal> e entre os seus
+			parâmetros deve ser indicada a periodicidade de execução.
+		</para>
+		<para>
+			No exemplo em questão, o método <function>checkDatabases()</function> será invocado
+			automaticamente pela aplicação a cada 30 segundos, fazendo com que o trapper
+			<literal>EscolaTrapper</literal> envie as mensagens ao servidor. Da mesma forma, o
+			método <function>checkUsedMemory()</function> será executado a cada minuto e provocará
+			o envio de um trap.
+		</para>
+		<note>
+			<para>
+				O ciclo de vida de um objeto do tipo checker é controlado pela implementação do CDI,
+				isto é, o programador não precisará se preocupar em instanciar um checker na aplicação.
+			</para>
+		</note>
+	</section>
+	
+	<section>
+		<title>Injeção de Trappers em um Checker</title>
+		<para>
+			 Objetos do tipo trapper podem ser facilmente injetados na classe checker com a anotação
+			 <literal>@Inject</literal>. Além disso, um mesmo checker pode conter referências a
+			 múltiplos trappers, tal como no exemplo a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@Checker
+	public class EscolaChecker {
+	
+		@Inject
+		@SNMP
+		private EscolaTrapper snmpTrapper;
+		
+		@Inject
+		@Zabbix
+		private EscolaTrapper zabbixTrapper;
+		
+		@Scheduled(interval = 30, unit = TimeUnit.SECONDS)
+		public void checkDatabases() {
+			snmpTrapper.sendDatabaseInfo("db1", conn1);
+			snmpTrapper.sendDatabaseInfo("db3", conn3);
+			zabbixTrapper.sendDatabaseInfo("db1", conn1);
+			zabbixTrapper.sendDatabaseInfo("db3", conn3);
+		}
+		
+		@Scheduled(interval = 1, unit = TimeUnit.MINUTES)
+		public void checkUsedMemory() {
+			snmpTrapper.sendHeapMemoryUsed();
+			zabbixTrapper.sendHeapMemoryUsed();
+		}
+	
+	}]]></programlisting>
+	</section>
+	
+</chapter>

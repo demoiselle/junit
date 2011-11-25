@@ -1,0 +1,146 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="influencia">
+
+	<title>Registro de seguidos e seguidores</title>
+
+	<section>
+		<title>Criação da entidade Influencia</title>
+		<para>
+			No pacote <literal>br.gov.frameworkdemoiselle.sample.tuiter.domain</literal>, crie a
+			classe <literal>Usuario</literal> contendo as linhas a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@CassandraColumn(columnFamily = "Following")
+public class Influencia {
+
+	@KeyProperty
+	private String seguidor;
+	
+	@ColumnProperty
+	private String seguido;
+	
+}]]></programlisting>
+		<tip>
+			<para>
+				As anotações <literal>@CassandraColumn</literal>, <literal>@KeyProperty</literal>
+				e <literal>@ColumnProperty</literal> estão no pacote
+				<literal>br.gov.frameworkdemoiselle.cassandra.annotation</literal>.
+				Na IDE Eclipse, utilize o atalho <guimenu>Ctrl+Shift+O</guimenu> para que elas
+				sejam importadas automaticamente na classe.
+			</para>
+		</tip>
+	</section>
+
+	<section>
+		<title>Unidade de persistência InfluenciaDAO</title>
+		<para>
+			No pacote <literal>br.gov.frameworkdemoiselle.sample.tuiter.persistence</literal>, crie a
+			classe <literal>InfluenciaDAO</literal> contendo as linhas a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class InfluenciaDAO extends CassandraColumnDAO<Influencia> {
+
+	public List<String> listarSeguidos(final String login) {
+		return getColumns(login);
+	}
+	
+	public List<String> listarSeguidores(final String login) {
+		return getColumnsBySecondary(login);
+	}
+
+}]]></programlisting>
+		<note>
+			<para>
+				A superclasse <literal>CassandraColumnDAO</literal> está contida no pacote
+				<literal>br.gov.frameworkdemoiselle.cassandra</literal>.
+			</para>
+		</note>
+	</section>
+
+	<section>
+		<title>Classe de testes Tuiter</title>
+		<para>
+			No diretório de testes <filename>src/test/java</filename>, modifique a classe
+			<literal>Tuiter</literal>, inserindo as linhas indicadas a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class Tuiter {
+
+	InfluenciaDAO influenciaDAO;
+
+	public static void main(String[] args) {
+		...
+		app.seguirUsuario();
+	}
+	
+	public Tuiter() {
+		...
+		influenciaDAO = new InfluenciaDAO();
+	}
+
+	private void seguirUsuario() {
+		Influencia inf = new Influencia();
+		inf.setSeguido("nice");
+		inf.setSeguidor("chico");
+		influenciaDAO.save(inf);
+		
+		inf = new Influencia();
+		inf.setSeguido("nice");
+		inf.setSeguidor("iara");
+		influenciaDAO.save(inf);
+		
+		inf = new Influencia();
+		inf.setSeguido("iara");
+		inf.setSeguidor("chico");
+		influenciaDAO.save(inf);
+	}
+	
+}]]></programlisting>
+	</section>
+
+	<section>
+		<title>Execução de testes e verificação</title>
+		<para>
+			Rode a classe <literal>Tuiter</literal> como uma aplicação Java. Em seguida, abra um
+			cliente do Apache Cassandra e verifique a inclusão dos valores na família de colunas
+			<literal>Following</literal> no keyspace <literal>Twitter</literal>.
+		</para>
+		<para>
+			Veja o resultado no aplicativo <emphasis>Cassandra GUI</emphasis>:
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="images/gui-following.png" align="center" scalefit="1" width="75%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="images/gui-following.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</para>
+	</section>
+
+	<section>
+		<title>Modificação da entidade Influencia</title>
+		<para>
+			No pacote <literal>br.gov.frameworkdemoiselle.sample.tuiter.domain</literal>,
+			altere a assinatura da classe <literal>Influencia</literal> indicando o índice reverso
+			no parâmetro <literal>secondaryColumnFamily</literal>: 
+		</para>
+		<programlisting role="JAVA"><![CDATA[@CassandraColumn(columnFamily = "Following", secondaryColumnFamily = "Followers")]]></programlisting>
+	</section>
+	
+	<section>
+		<title>Reexecução e verificação da coluna secundária</title>
+		<para>
+			Rode novamente a classe <literal>Tuiter</literal>. Desta vez, verifique a inclusão dos
+			valores na família de colunas <literal>Followers</literal> no keyspace <literal>Twitter</literal>:
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="images/gui-followers.png" align="center" scalefit="1" width="75%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="images/gui-followers.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</para>
+	</section>
+	
+</chapter>

@@ -1,0 +1,144 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE appendix PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<appendix id="clientes">
+
+	<title>Teste com aplicativos clientes</title>
+
+	<note>
+		<para>
+			Para esta seção do documento, assegure-se que um servidor
+			<emphasis>Apache Cassandra</emphasis> esteja ativo e respondendo a requisições
+			no host <literal>localhost</literal> nas portas Thrift 9160 e JMX 8080.
+		</para>
+		<para>
+			Considere a variável <literal>CASSANDRA_HOME</literal> como sendo o local onde o
+			Cassandra foi instalado no sistema operacional.
+		</para>
+	</note>
+
+	<section>
+		<title>Visão geral do cassandra-cli</title>
+		<para>
+			Abra um novo terminal e execute a instrução a seguir para abrir o console de operações
+			do cliente <emphasis>cassandra-cli</emphasis>, fornecido com os binários do Cassandra:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ ./bin/cassandra-cli --host localhost --port 9160]]></programlisting>
+		<para>
+			Assim que aparecer o prompt (i.e., <literal>cassandra></literal>), digite <command>help</command>
+			ou <command>?</command> e pressione <command>ENTER</command> para obter a lista de
+			possíveis instruções executáveis no <emphasis>cassandra-cli</emphasis>. Veja: 
+		</para>
+		<programlisting><![CDATA[cassandra> ?
+List of all CLI commands:
+?                                                                  Same as help.
+help                                                          Display this help.
+connect <hostname>/<port>                             Connect to thrift service.
+describe keyspace <keyspacename>                              Describe keyspace.
+exit                                                                   Exit CLI.
+quit                                                                   Exit CLI.
+show config file                                Display contents of config file.
+show cluster name                                          Display cluster name.
+show keyspaces                                           Show list of keyspaces.
+show api version                                        Show server API version.
+get <ksp>.<cf>['<key>']                                  Get a slice of columns.
+get <ksp>.<cf>['<key>']['<super>']                   Get a slice of sub columns.
+get <ksp>.<cf>['<key>']['<col>']                             Get a column value.
+get <ksp>.<cf>['<key>']['<super>']['<col>']              Get a sub column value.
+set <ksp>.<cf>['<key>']['<col>'] = '<value>'                       Set a column.
+set <ksp>.<cf>['<key>']['<super>']['<col>'] = '<value>'        Set a sub column.
+del <ksp>.<cf>['<key>']                                           Delete record.
+del <ksp>.<cf>['<key>']['<col>']                                  Delete column.
+del <ksp>.<cf>['<key>']['<super>']['<col>']                   Delete sub column.
+count <ksp>.<cf>['<key>']                               Count columns in record.
+count <ksp>.<cf>['<key>']['<super>']            Count columns in a super column.]]></programlisting>
+		<para>
+			Execute a instrução abaixo para consultar o nome do cluster (deve aparecer
+			<literal>Test Cluster</literal>):
+		</para>
+		<programlisting><![CDATA[cassandra> show cluster name]]></programlisting>
+		<para>
+			Execute a instrução abaixo para listar os keyspaces existentes (inicialmente
+			apenas <literal>Keyspace1</literal> e <literal>system</literal>):
+		</para>
+		<programlisting><![CDATA[cassandra> show keyspaces]]></programlisting>
+		<para>
+			Para obter informações detalhadas sobre as famílias de colunas existentes em um
+			keyspace, execute o comando a seguir:
+		</para>
+		<programlisting><![CDATA[cassandra> describe keyspace Keyspace1]]></programlisting>
+	</section>
+
+	<section>
+		<title>Armazenando e consultando dados</title>
+		<para>
+			Para armazenar um dado no <emphasis>Apache Cassandra</emphasis> utilizando o
+			cliente <emphasis>cassandra-cli</emphasis>, execute a instrução a seguir:
+		</para>
+		<programlisting><![CDATA[cassandra> set Keyspace1.Standard1['chuck']['name'] = 'Chuck Norris']]></programlisting>
+		<para>
+			Para entender o que foi feito acima, vamos destrinchar esse comando:
+		</para>
+		<programlisting><![CDATA[set Keyspace1.Standard1['chuck']['name'] = 'Chuck Norris'
+     \            \         \        \          \
+      \            \         \_ key   \          \_ value
+       \            \                  \_ column
+        \_ keyspace  \_ column family]]></programlisting>
+        <para>
+        	Os dados armazenados no Cassandra são associados a uma <emphasis>família de colunas</emphasis>
+        	(<literal>column family</literal>), que por sua vez é vinculada a um <literal>keyspace</literal>.
+        	No exemplo acima, atribuímos o <emphasis>valor</emphasis> (<literal>value</literal>)
+        	<quote>Chuck Norris</quote> na <emphasis>coluna</emphasis> (<literal>column</literal>)
+        	<quote>name</quote> para a <emphasis>chave</emphasis> (<literal>key</literal>) <quote>chuck</quote>. 
+        </para>
+        <para>
+        	Simples, não? Agora repita o processo incluindo outros dados:
+        </para>
+        <programlisting><![CDATA[set Keyspace1.Standard1['chuck']['email'] = 'chuck.norris@gmail.com'
+
+set Keyspace1.Standard1['chuck']['active'] = 'true'
+                 
+set Keyspace1.Standard1['chuck']['age'] = '48']]></programlisting>
+		<para>
+			Para saber quantas colunas foram associadas a uma dada chave, execute esse comando:
+		</para>
+		<programlisting><![CDATA[cassandra> count Keyspace1.Standard1['chuck']]]></programlisting>
+		<para>
+			Para obter os valores de todas as colunas de uma dada chave, execute isso:
+		</para>
+		<programlisting><![CDATA[cassandra> get Keyspace1.Standard1['chuck']]]></programlisting>
+		<para>
+			E finalmente, para obter o valor de uma única coluna de uma dada chave, execute isso:
+		</para>
+		<programlisting><![CDATA[cassandra> get Keyspace1.Standard1['chuck']['email']]]></programlisting>
+	</section>
+
+	<section>
+		<title>Uma alternativa gráfica</title>
+		<para>
+			Para facilitar a visualização dos dados contidos em um servidor Apache Cassandra, é
+			possível utilizar a aplicação <emphasis>Cassandra GUI</emphasis>:
+			<mediaobject>
+	            <imageobject role="fo">
+	                <imagedata fileref="images/gui-chuck.png" align="center" scalefit="1" width="75%"/>
+	            </imageobject>
+	            <imageobject role="html">
+	                <imagedata fileref="images/gui-chuck.png" align="center"/>
+	            </imageobject>
+	        </mediaobject>
+		</para>
+		<para>
+			Para ambientes Debian GNU/Linux o projeto <emphasis>Demoiselle Infra</emphasis> fornece o
+			pacote <literal>demoiselle-cassandra-gui-0.6</literal>. Com isso, basta executar a
+			instrução a seguir para instalar o aplicativo: 
+		</para>
+		<programlisting role="BASH"><![CDATA[# apt-get install demoiselle-cassandra-gui-0.6]]></programlisting>
+		<tip>
+			<para>
+				Acesse o site <ulink url="http://demoiselle.sourceforge.net/infra/">Demoiselle Infra</ulink>
+				para obter maiores informações sobre os pacotes de software fornecidos pelo respectivo projeto.
+			</para>
+		</tip>
+	</section>
+
+</appendix>

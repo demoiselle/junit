@@ -1,0 +1,198 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="linhas">
+
+	<title>Linhas de tempo e do usuário</title>
+
+	<section>
+		<title>Criação da entidade LinhaTempo</title>
+		<para>
+			No pacote <literal>br.gov.frameworkdemoiselle.sample.tuiter.domain</literal>, crie a
+			classe <literal>LinhaTempo</literal> contendo as linhas a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@CassandraColumn(columnFamily = "Timeline")
+public class LinhaTempo {
+
+	@KeyProperty
+	private String usuario;
+
+	@ColumnProperty
+	private Long tempo;
+
+	@ValueProperty
+	private Long mensagem;
+
+}]]></programlisting>
+		<tip>
+			<para>
+				As anotações <literal>@CassandraColumn</literal>, <literal>@KeyProperty</literal>,
+				<literal>@ColumnProperty</literal> e <literal>@ValueProperty</literal> estão no pacote
+				<literal>br.gov.frameworkdemoiselle.cassandra.annotation</literal>.
+				Na IDE Eclipse, utilize o atalho <guimenu>Ctrl+Shift+O</guimenu> para que elas
+				sejam importadas automaticamente na classe.
+			</para>
+		</tip>
+	</section>
+
+	<section>
+		<title>Unidade de persistência LinhaTempoDAO</title>
+		<para>
+			No pacote <literal>br.gov.frameworkdemoiselle.sample.tuiter.persistence</literal>, crie a
+			classe <literal>LinhaTempoDAO</literal> contendo as linhas a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class LinhaTempoDAO extends CassandraColumnDAO<LinhaTempo> {
+
+	public List<String> listarMensagens(final String login) {
+		return getValues(login);
+	}
+
+}]]></programlisting>
+		<note>
+			<para>
+				A superclasse <literal>CassandraColumnDAO</literal> está contida no pacote
+				<literal>br.gov.frameworkdemoiselle.cassandra</literal>.
+			</para>
+		</note>
+	</section>
+
+	<section>
+		<title>Classe de testes Tuiter</title>
+		<para>
+			No diretório de testes <filename>src/test/java</filename>, modifique a classe
+			<literal>Tuiter</literal>, inserindo as linhas indicadas a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class Tuiter {
+
+	LinhaTempoDAO linhaTempoDAO;
+
+	public Tuiter() {
+		...
+		linhaTempoDAO = new LinhaTempoDAO();
+	}
+
+	private void escreverMensagem() {
+		...
+		
+		final long timestamp = System.currentTimeMillis();
+		
+		List<String> seguidores = influenciaDAO.listarSeguidores("nice");
+		if (seguidores != null) {
+			for (String usuario : seguidores) {
+				LinhaTempo linha = new LinhaTempo();
+				linha.setUsuario(usuario);
+				linha.setTempo(timestamp);
+				linha.setMensagem(id);
+				linhaTempoDAO.save(linha);
+			}
+		}
+	}
+	
+}]]></programlisting>
+	</section>
+
+	<section>
+		<title>Execução de testes e verificação</title>
+		<para>
+			Rode a classe <literal>Tuiter</literal> como uma aplicação Java. Em seguida, abra um
+			cliente do Apache Cassandra e verifique a inclusão dos valores na família de colunas
+			<literal>Timeline</literal> no keyspace <literal>Twitter</literal>.
+		</para>
+		<para>
+			Veja o resultado no aplicativo <emphasis>Cassandra GUI</emphasis>:
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="images/gui-timeline.png" align="center" scalefit="1" width="75%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="images/gui-timeline.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</para>
+	</section>
+
+	<section>
+		<title>Criação da entidade LinhaUsuario</title>
+		<para>
+			No pacote <literal>br.gov.frameworkdemoiselle.sample.tuiter.domain</literal>, crie a
+			classe <literal>LinhaUsuario</literal> contendo as linhas a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@CassandraColumn(columnFamily = "Userline")
+public class LinhaUsuario {
+
+	@KeyProperty
+	private String usuario;
+
+	@ColumnProperty
+	private Long tempo;
+	
+	@ValueProperty
+	private Long mensagem;
+
+}]]></programlisting>
+	</section>
+
+	<section>
+		<title>Unidade de persistência LinhaUsuarioDAO</title>
+		<para>
+			No pacote <literal>br.gov.frameworkdemoiselle.sample.tuiter.persistence</literal>, crie a
+			classe <literal>LinhaUsuarioDAO</literal> contendo as linhas a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class LinhaUsuarioDAO extends CassandraColumnDAO<LinhaUsuario> {
+
+	public List<String> listarMensagens(final String login) {
+		return getValues(login);
+	}
+
+}]]></programlisting>
+	</section>
+
+	<section>
+		<title>Classe de testes Tuiter</title>
+		<para>
+			No diretório de testes <filename>src/test/java</filename>, modifique a classe
+			<literal>Tuiter</literal>, inserindo as linhas indicadas a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class Tuiter {
+
+	LinhaUsuarioDAO linhaUsuarioDAO;
+
+	public Tuiter() {
+		...
+		linhaUsuarioDAO = new LinhaUsuarioDAO();
+	}
+
+	private void escreverMensagem() {
+		...
+		
+		LinhaUsuario lu = new LinhaUsuario();
+		lu.setUsuario("nice");
+		lu.setTempo(timestamp);
+		lu.setMensagem(id);
+		linhaUsuarioDAO.save(lu);
+	}
+	
+}]]></programlisting>
+	</section>
+
+	<section>
+		<title>Execução de testes e verificação</title>
+		<para>
+			Rode a classe <literal>Tuiter</literal> como uma aplicação Java. Em seguida, abra um
+			cliente do Apache Cassandra e verifique a inclusão dos valores na família de colunas
+			<literal>Userline</literal> no keyspace <literal>Twitter</literal>.
+		</para>
+		<para>
+			Veja o resultado no aplicativo <emphasis>Cassandra GUI</emphasis>:
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="images/gui-userline.png" align="center" scalefit="1" width="75%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="images/gui-userline.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</para>
+	</section>
+
+</chapter>

@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="monitoring-configuracao">
+
+	<title>Configuração do Monitoring</title>
+	
+	<section>
+		<title>Instalação do componente</title>
+		<para>
+			Para instalar o componente <emphasis>Demoiselle Monitoring</emphasis> na aplicação,
+			basta adicionar a sua dependência no arquivo <filename>pom.xml</filename> do projeto
+			gerenciado pelo Maven:
+		</para>
+		<programlisting role="XML"><![CDATA[<dependency>
+	<groupId>br.gov.frameworkdemoiselle.component</groupId>
+	<artifactId>demoiselle-monitoring</artifactId>
+	<version>2.0.0</version>
+</dependency>]]></programlisting>
+	</section>
+	
+	<section>
+		<title>Arquivos de configuração</title>
+		<para>
+			Os parâmetros utilizados pelo componente são concentrados no arquivo
+			<filename>demoiselle.properties</filename>. Maiores informações sobre eles são
+			detalhadas de forma distribuída nos capítulos seguintes.
+		</para>
+		<para>
+			Informações sobre a segurança no protocolo SNMP (especificamente para a versão 3)
+			são armazenadas no arquivo <filename>snmp-security.xml</filename>.
+		</para>
+	</section>
+	
+</chapter>

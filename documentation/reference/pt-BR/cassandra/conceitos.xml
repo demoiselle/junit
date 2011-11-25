@@ -1,0 +1,291 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE appendix PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<appendix id="conceitos">
+
+	<title>Conceitos gerais</title>
+
+	<section>
+		<title>O que é NoSQL?</title>
+		<para>
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="images/nosql-logo.png" align="center" scalefit="1" width="75%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="images/nosql-logo.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+			<emphasis>NoSQL</emphasis>, acrônimo para <quote>Not Only SQL</quote>, é um termo genérico
+			para uma classe definida de bancos de dados que diferem do modelo clássico relacional,
+			rompendo uma longa história de SGBDs com propriedades transacionais.
+		</para>
+		<para>
+			Trata-se de um movimento que surgiu da necessidade de aplicações com desempenho superior
+			e alta escalabilidade, funcionalidades que os bancos de dados relacionais não eram capazes
+			de alcançar com facilidade.
+		</para>
+		<para>
+			Os bancos de dados ditos NoSQL possuem as seguintes características em comum. Em geral eles são:
+		</para>
+		<itemizedlist>
+			<listitem>não relacionais</listitem>
+			<listitem>distribuídos</listitem>
+			<listitem>horizontalmente escaláveis</listitem>
+			<listitem>possuem esquemas flexíveis</listitem>
+			<listitem>são replicáveis</listitem>
+			<listitem>possuem APIs simples</listitem>
+			<listitem>seguem o modelo BASE (e não ACID)</listitem>
+		</itemizedlist>
+		<para>
+			Eis algumas implementações de bancos de dados NoSQL: Bigtable (Google), Dynamo (Amazon), Cassandra (Apache), Hypertable e CouchDB.
+		</para>
+		<tip>
+			<para>
+				Veja mais informações sobre NoSQL em <ulink url="http://nosql-database.org/"/>.
+			</para>
+		</tip>
+	</section>
+	
+	<section>
+		<title>O que é Apache Cassandra?</title>
+		<para>
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="images/cassandra-logo.png" align="center" scalefit="1" width="75%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="images/cassandra-logo.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</para>
+		<tip>
+			<para>
+				<quote><emphasis>A high performance, scalable, distributed storage and processing
+				system for structured and unstructured data.</emphasis></quote>
+			</para>
+		</tip>
+		<para>
+			O projeto <emphasis>Apache Cassandra</emphasis> mantém um banco de dados altamente
+			escalável de segunda geração, aliando a arquitetura completamente distribuída do
+			<emphasis>Dynamo da Amazon</emphasis> com o modelo de dados baseado em famílias de
+			colunas do <emphasis>Bigtable da Google</emphasis>.
+		</para>
+		<para>
+			O Cassandra foi inicialmente criado pelo <emphasis>Facebook</emphasis>, tendo seu
+			código fonte liberado para a <emphasis>Fundação Apache</emphasis> em 2008. Desde
+			então é mantido por esta através de desenvolvedores e contribuidores de diversas empresas.
+		</para>
+		<para>
+			Eis as referências para os trabalhos que inspiraram o desenvolvimento do <emphasis>Cassandra</emphasis>:
+		</para>
+		<itemizedlist>
+			<listitem>
+				<para>
+					<emphasis>Bigtable: A Distributed Storage System for Structured Data</emphasis>
+				</para>
+				<para>
+					Chang et al (Google) - 7th OSDI (2006)
+				</para>
+				<para>
+					<ulink url="http://labs.google.com/papers/bigtable-osdi06.pdf"/>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>Dynamo: Amazon's Highly Available Key-value Store</emphasis>
+				</para>
+				<para>
+					DeCandia et al (Amazon.com) - ACM 21st SOSP (2007)
+				</para>
+				<para>
+					<ulink url="http://s3.amazonaws.com/AllThingsDistributed/sosp/amazon-dynamo-sosp2007.pdf"/>
+				</para>
+			</listitem>
+		</itemizedlist>
+	</section>
+	
+	<section>
+		<title>Um novo modelo de dados</title>
+		<para>
+			O modelo de dados do Apache Cassandra é baseado no Google Bigtable, possuindo as
+			seguintes nomenclaturas:
+		</para>
+		<itemizedlist>
+			<listitem>
+				<para>
+					<emphasis>Keyspace</emphasis>: agrupamento de famílias de colunas (similar a um
+					banco de dados do modelo relacional)
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>Column Family</emphasis>: agrupamento de colunas com ordenação fixada
+					(similar a uma tabela)
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>Row Key</emphasis> ou simplemente <emphasis>Key</emphasis>: chave que
+					representa uma linha de colunas (similar a uma chave primária)
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>Column</emphasis>: representação de um valor, contendo o tripleto:
+					Nome (<emphasis>Name</emphasis>), Valor (<emphasis>Value</emphasis>) e
+					<emphasis>Timestamp</emphasis>
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+			Eis um exemplo de modelagem com uma família de colunas:
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="images/datamodel1.png" align="center" scalefit="1" width="75%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="images/datamodel1.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</para>
+		<para>
+			O Cassandra implementa também o conceito de <emphasis>supercolunas</emphasis>, isto é,
+			colunas que carregam subcolunas. Eis um exemplo:
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="images/datamodel2.png" align="center" scalefit="1" width="75%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="images/datamodel2.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</para>
+		<tip>
+			<para>
+				Veja mais informações sobre o modelo de dados do Cassandra em
+				<ulink url="http://wiki.apache.org/cassandra/DataModel/"/>.
+			</para>
+		</tip>
+	</section>
+	
+	<section>
+		<title>O que é Thrift?</title>
+		<para>
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="images/thrift-logo.png" align="center" scalefit="1" width="75%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="images/thrift-logo.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+			Acessar e manipular os dados armazenados no Apache Cassandra não é uma tarefa trivial,
+			uma vez que não existe uma linguagem de consultas ad-hoc tal como SQL. Ao invés disso,
+			é preciso utilizar uma API de baixo nível chamada <emphasis>Thrift</emphasis>.
+		</para>
+		<para>
+			A API Thrift fornece interfaces para os desenvolvedores em diversas linguagens de
+			programação, entre elas: C++, Java, Python, PHP, Ruby, Erlang, Perl, Haskell, C#,
+			Cocoa, Smalltalk e OCaml.
+		</para>
+		<para>
+			As seguintes funções de consulta são fornecidas pela Thrift:
+		</para>
+		<itemizedlist>
+			<listitem>
+				<para>
+					<function>get()</function>: busca por nome de coluna
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<function>multiget()</function>: por nome de coluna para um conjunto de chaves
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<function>get_slice()</function>: por nome de coluna ou faixa de nomes
+					(retornando colunas ou supercolunas)
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<function>multiget_slice()</function>: um subconjunto de colunas para um
+					conjunto de chaves
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<function>get_count()</function>: número de colunas ou supercolunas
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<function>get_range_slice()</function>: subconjunto de colunas para uma faixa de chaves
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+			Também são disponibilizadas funções de modificação dos dados:
+		</para>
+		<itemizedlist>
+			<listitem>
+				<para>
+					<function>insert()</function>: inclui ou atualiza uma coluna pela chave
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<function>batch_insert()</function>: inclui ou atualiza múltiplas colunas pela chave
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<function>remove()</function>: exclui uma coluna
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<function>batch_mutate()</function>: funciona como
+					<function>batch_insert()</function>, mas também pode excluir (v0.6+)
+				</para>
+			</listitem>
+		</itemizedlist>
+		<tip>
+			<para>
+				Veja mais informações sobre Thrift em <ulink url="http://incubator.apache.org/thrift/"/>
+				e em <ulink url="http://wiki.apache.org/cassandra/API/"/>.
+			</para>
+		</tip>
+	</section>
+	
+	<section>
+		<title>O que é Hector?</title>
+		<para>
+			<emphasis>Hector</emphasis> é um cliente de alto nível em linguagem Java para o
+			Cassandra, o qual fornece:
+		</para>
+		<itemizedlist>
+			<listitem>interface simples e de alto nível orientada a objetos para o Cassandra</listitem>
+			<listitem>comportamento de tolerância a falhas no lado do cliente (failover)</listitem>
+			<listitem>gerenciamento de pool de conexão para melhoria de desepenho e escalabilidade</listitem>
+			<listitem>contadores em JMX para monitoração e gerenciamento</listitem>
+			<listitem>balanceamento de carga (load balancing)</listitem>
+		</itemizedlist>
+		<tip>
+			<para>
+				Veja mais informações sobre Hector em
+				<ulink url="http://prettyprint.me/2010/02/23/hector-a-java-cassandra-client/"/>.
+			</para>
+		</tip>
+		<note>
+			<para>
+				Internamente a biblioteca Hector faz uso da API Thrift para acesso ao Cassandra.
+				O componente <emphasis>Demoiselle Cassandra</emphasis>, por sua vez, é uma camada
+				para o Hector (e consequentemente para a Thrift).
+			</para>
+		</note>
+	</section>
+	
+</appendix>

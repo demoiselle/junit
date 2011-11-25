@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE part PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<part id="mail-master">
+
+	<title>Demoiselle Mail</title>
+	
+	<partintro>
+		<para>
+			Para o envio e recebimento de e-mails em aplicativos Java, a solução mais natural é usar a API <emphasis><ulink url="http://www.oracle.com/technetwork/java/javamail/index.html">JavaMail</ulink></emphasis>. 
+			Ela provê um framework para trabalhar com e-mails e que é independente de protocolo e plataforma, facilitando bastante esta tarefa. 
+			Para ter esta funcionalidade em sua aplicação, basta ter um simples arquivo no formato JAR no seu <literal>classpath</literal> e que pode ser usado 
+			tanto em projetos Java SE como em Java EE. 
+		</para>
+		<para>
+			Apesar de o JavaMail ser uma excelente API, ainda são necessárias algumas configurações extras e que necessitam de muita codificação por parte do
+			programador. Existem outras tarefas que não são muito triviais de serem realizadas usando somente a API do JavaMail, como anexar arquivos, 
+			definir a prioridade do e-mail, adicionar pedido de retorno de leitura entre outros.
+		</para>
+		<para>
+			O componente <emphasis>Demoiselle Mail</emphasis> vem para preencher este vazio deixado
+			pelo <emphasis>JavaMail</emphasis>, tornando estas tarefas extremamente fáceis. O componente
+			fornece uma única interface para o programador interagir e apenas um arquivo de configuração.
+			Totalmente baseada na ideia de DSL (Domain Specific Language). Definir a importância de um
+			e-mail é tão simples quanto chamar um método <emphasis>mail.importance().high()</emphasis>.
+			Neste manual, veremos em todos os detalhes este componente e como ele pode facilitar
+			sensivelmente o envio de e-mail em suas aplicações.
+		</para>
+	</partintro>
+	
+	<!-- capítulos -->
+	<xi:include href="configuracao.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+	<xi:include href="utilizacao.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+	
+</part>

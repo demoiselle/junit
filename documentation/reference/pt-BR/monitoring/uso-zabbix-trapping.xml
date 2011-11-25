@@ -1,0 +1,511 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="monitoring-zabbix-trapping">
+
+	<title>Monitorando via Zabbix (trapping)</title>
+	<para>
+		O componente <emphasis>Demoiselle Monitoring</emphasis> fornece um mecanismo simples e
+		transparente para uma aplicação Java enviar mensagens a um servidor Zabbix. Trata-se de um
+		código escrito inteiramente em linguagem Java que faz o papel do utilitário
+		<command>zabbix_sender</command>
+		<footnote>
+			<para>
+				Para maiores informações sobre o <command>zabbix_sender</command>, acesse:
+				<ulink url="http://www.zabbix.com/documentation/1.8/manual/processes/zabbix_sender"/>
+			</para>
+		</footnote>.
+	</para>
+	<para>
+		O envio de mensagens a um servidor Zabbix é muito simples, basta informar três dados ao servidor:
+		<itemizedlist>
+			<listitem>
+				<para>
+					<emphasis>host</emphasis>: pré-cadastrado no Zabbix como nome de <literal>Host</literal>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>chave</emphasis>: pré-cadastrada no Zabbix em um indicador do host
+					(i.e., campo <literal>Key</literal> de um <literal>Item</literal>)
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>valor</emphasis>: a mensagem a ser transmitida, podendo ser um
+					texto, número ou valor lógico (booleano)
+				</para>
+			</listitem>
+		</itemizedlist>
+	</para>
+	<para>
+		Veremos nas próximas seções de que forma o componente <emphasis>Demoiselle Monitoring</emphasis>
+		pode auxiliar o desenvolvedor a preparar uma aplicação Java para ser monitorada via polling
+		por um servidor Zabbix.
+	</para>
+	
+	<section>
+		<title>Configuração para os trappers Zabbix</title>
+		<para>
+			Alguns parâmetros devem ser configurados na aplicação para o envio de mensagens ao
+			servidor Zabbix pelo componente <emphasis>Demoiselle Monitoring</emphasis>. Tais
+			configurações são feitas no arquivo <filename>demoiselle.properties</filename>:
+		</para>
+		<programlisting role="PROPERTIES"><![CDATA[frameworkdemoiselle.monitoring.zabbix.trapper.server = localhost
+frameworkdemoiselle.monitoring.zabbix.trapper.port = 10051
+frameworkdemoiselle.monitoring.zabbix.trapper.host = Armenia Server
+frameworkdemoiselle.monitoring.zabbix.trapper.default_key = app.message]]></programlisting>
+		<para>
+			Esses parâmetros definem o endereço (<literal>server</literal>) e a porta (<literal>port</literal>)
+			de comunicação com o servidor Zabbix que receberá as mensagens, além de especificar o nome do host
+			(<literal>host</literal>) e uma chave padrão (<literal>default_key</literal>) para estas.
+		</para>
+	</section>
+	
+	<section>
+		<title>Criação e utilização do Trapper Zabbix</title>
+		<para>
+			Ao utilizar o <emphasis>Demoiselle Monitoring</emphasis>, o desenvolvedor poderá
+			implementar facilmente suas próprias <emphasis>trappers</emphasis>. Para isso, ele pode
+			inicialmente criar uma interface contendo os métodos que enviarão as mensagens.
+			Eis um exemplo:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public interface MyTrapper {
+
+	void sendFailure(String message);
+   
+}]]></programlisting>
+		<para>
+			Em seguida ele criará a respectiva classe, anotando com o estereótipo
+			<literal>@Trapper</literal> e o qualificador <literal>@Zabbix</literal> (ficará
+			implícito que se trata de um <quote>trapper para Zabbix</quote>).
+		</para>
+		<para>
+			Veja como é simples:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@Trapper
+@Zabbix
+public class MyTrapperZabbix implements MyTrapper {
+
+	public void sendFailure(String message) { }
+   
+}]]></programlisting>
+		<note>
+			<para>
+				Lembre-se de que criar uma interface para o trapper e em seguida implementá-la
+				não é obrigatório, mas apenas um direcionamento. Se preferir, você pode construir a
+				classe trapper diretamente (isto é, sem usar o <literal>implements</literal>).
+				Entretanto, a aplicação será mais flexível ao considerar o uso de interfaces na
+				arquitetura de seus componentes.
+			</para>
+		</note>
+		<important>
+			<para>
+				Note que os métodos da classe trapper não precisam ser codificados, ou seja, podem
+				ficar vazios. Isso porque neles atuarão interceptadores do CDI. Na versão 1.x do
+				componente isso era realizado através de aspectos com o AspectJ.
+			</para>
+		</important>
+		<para>
+			Finalmente, para utilizar esse trapper em qualquer parte da aplicação, basta declarar
+			um campo com o tipo da interface e anotá-lo com <literal>@Inject</literal>:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class TrapperTest {
+
+	@Inject
+	@Zabbix
+	private MyTrapper trapper;
+	
+	public void sendFailureMessage() {
+		trapper.sendFailure("Hello, zabbix...");
+	}
+
+}]]></programlisting>
+		<para>
+			Uma vez invocado o método <function>sendFailure()</function>, o interceptador agirá
+			sobre ele e fará o envio, de forma assíncrona, da mensagem ao servidor Zabbix na forma
+			de uma mensagem.
+		</para>
+		<para>
+			Neste caso específico, a mensagem com o texto <quote><literal>Hello, zabbix...</literal></quote>
+			chegará ao servidor Zabbix direcionada ao host de nome <quote>Armenia Server</quote> e
+			usando o indicador <quote>app.message</quote>. Isso porque estes parâmetros foram
+			definidos no arquivo <filename>demoiselle.properties</filename>. Veremos na seção
+			seguinte como fazer para sobrescrevê-los.
+		</para>
+		<para>
+			Ao ser executado o método <function>TrapperTest.sendFailureMessage()</function>, será
+			transmitida a mensagem ao servidor Zabbix tal como se fosse invocado o binário
+			<command>zabbix_sender</command> dessa maneira:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ zabbix_sender -s "Armenia Server" -k app.message -o "Hello, zabbix..."]]></programlisting>
+		<para>
+			Uma sugestão é utilizar esse método em blocos protegidos com <literal>try..catch</literal>
+			no Java. Se uma determinada exceção for levantada, o trapper pode ser invocado para
+			enviar os detalhes para o servidor Zabbix. Veja:
+		</para>
+		<programlisting role="JAVA"><![CDATA[try {
+	throw new Exception("Um erro ocorreu intencionalmente");
+} catch (Exception e) {
+	trapper.sendFailure(e.getMessage());
+}]]></programlisting>
+	</section>
+
+	<section>
+		<title>Definindo o host e a chave do indicador</title>
+		<para>
+			Embora tenhamos usado os valores padrões no primeiro exemplo, as informações de nome
+			de host e chave do indicador podem ser sobrescritas através de anotações no trapper.
+			A sobrescrita das chaves é particularmente importante pois permite a definição de
+			múltiplos indicadores monitoráveis (chamados de <emphasis>Items</emphasis> no Zabbix)
+			para um mesmo host. 
+		</para>
+		<para>
+			Para sobrescrever o nome do host especificado no arquivo <filename>demoiselle.properties</filename>
+			é preciso utilizar a anotação <literal>@HostName</literal> na declaração da classe trapper.
+		</para>
+		<para>
+			Na prática, cada método da classe trapper em Java será responsável por um indicador
+			monitorável no Zabbix. Para definir a chave de um indicador, simplesmente anote o
+			método com <literal>@ItemKey</literal>.
+		</para>
+		<para>
+			Veja como fica uma classe trapper com múltiplos indicadores e com o nome de host especificado:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@Trapper
+@Zabbix
+@HostName("Marumbi Server")
+public class MyZabbixTrapper implements IMyTrapper {
+
+    @ItemKey("app.failure")
+    @Override
+    public void sendFailure(String message) { }
+
+    @ItemKey("app.database")
+    @Override
+    public void sendDatabaseInfo(int connections) { }
+	
+}]]></programlisting>
+		<para>
+			Veja alguns exemplos de invocação desses métodos do trapper na aplicação:
+		</para>
+		<programlisting role="JAVA"><![CDATA[trapper.sendFailure("webservice fora do ar");
+		
+trapper.sendDatabaseInfo(50);]]></programlisting>
+		<para>
+			Eles serão equivalentes à execução desses comandos:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ zabbix_sender -s "Marumbi Server" -k app.failure -o "webservice fora do ar"
+
+$ zabbix_sender -s "Marumbi Server" -k app.database -o 50]]></programlisting>
+		<para>
+			Dessa forma, é preciso que o host de nome <quote>Marumbi Server</quote> seja criado no
+			servidor Zabbix. Além disso, esse host deve possuir indicadores com as chaves
+			<literal>app.failure</literal> e <literal>app.database</literal>.
+		</para>
+		<important>
+			<para>
+				Se o nome de host e a chave de indicador monitorável informada na mensagem não
+				estiverem previamente cadastrados no Zabbix, a mensagem é ignorada pelo servidor.
+			</para>
+		</important>
+	</section>
+
+	<section>
+		<title>Usando parâmetros curingas nas chaves</title>
+		<para>
+			Imagine uma situação em que múltiplos indicadores similares precisam ser criados para
+			um mesmo host monitorado pelo Zabbix. Ao utilizar o <emphasis>Demoiselle Monitoring</emphasis>,
+			isso significaria criar múltiplos métodos distintos para a classe trapper. Por exemplo:
+			enviar a quantidade de conexões em cada um dos três bancos de dados utilizados pela aplicação.
+		</para>
+		<para>
+			Para facilitar esse tipo de situação, é possível utilizar curingas na string que define
+			as chaves de um indicador na anotação <literal>@ItemKey</literal>. Para ilustrar,
+			considere alterar o método <function>sendDatabaseInfo()</function> da classe
+			<literal>MyZabbixTrapper</literal>:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@ItemKey("app.database[*]")
+public void sendDatabaseInfo(String datasource, int connections) { }]]></programlisting>
+		<para>
+			Dessa forma, o curinga (representado pelo caracter <quote>*</quote> na string) será
+			substituído pelo valor passado no primeiro argumento do método, <literal>datasource</literal>.
+			Veja alguns exemplos de invocação desse método:
+		</para>
+		<programlisting role="JAVA"><![CDATA[trapper.sendDatabaseInfo("db1", 100);
+
+trapper.sendDatabaseInfo("db2", 150);
+
+trapper.sendDatabaseInfo("db3", 200);]]></programlisting>
+		<para>
+			O <emphasis>Demoiselle Monitoring</emphasis> fará a substituição automática das chaves
+			no momento do envio da mensagem. Neste exemplo, o servidor receberá os valores 100, 150 e 200
+			respectivamente para os indicadores <literal>app.database[db1]</literal>,
+			<literal>app.database[db2]</literal> e <literal>app.database[db3]</literal>.
+			Note que ao usar o curinga, a string da chave pode ser definida de um modo mais flexível e poderoso.
+		</para>
+		<important>
+			<para>
+				No servidor Zabbix é preciso cadastrar individualmente cada possível variação de
+				chave para os indicadores. Ou seja, o curinga é um facilitador para organizar o
+				código da aplicação Java.
+			</para>
+		</important>
+		<para>
+			Podem ser especificados diversos curingas em uma mesma string de chave, sempre usando o
+			caracter <quote>*</quote> para isso. Neste caso, eles serão substituídos pelos argumentos
+			do método na ordem em que forem declarados.
+		</para>
+	</section>
+	
+	<section>
+		<title>Consultando MBeans e usando a anotação @JMXQuery</title>
+		<para>
+			A aplicação Java pode consultar valores de objetos registrados em MBeans no próprio
+			servidor JMX da Máquina Virtual (JVM) em que ela estiver sendo executada. Para isso, o
+			<emphasis>Demoiselle Monitoring</emphasis> fornece a classe utilitária <literal>MBeanHelper</literal>.
+			Com o método estático <function>Object query(String name, String attribute)</function>
+			dessa classe, basta informar o nome do MBean e o atributo desejado.
+		</para>
+		<para>
+			Eis alguns exemplos de consulta aos parâmetros do sistema operacional e da Máquina
+			Virtual do Java (JVM) através de JMX com o método <function>MBeanHelper.query()</function>:
+		</para>
+		<programlisting role="JAVA"><![CDATA[// nome e versao do sistema operacional
+String name = (String) MBeanHelper.query("java.lang:type=OperatingSystem", "Name");
+String version = (String) MBeanHelper.query("java.lang:type=OperatingSystem", "Version");
+
+// carga media do sistema (load avg)
+Double load = (Double) MBeanHelper.query("java.lang:type=OperatingSystem", "SystemLoadAverage");
+
+// nome e versao da JVM
+String name = (String) MBeanHelper.query("java.lang:type=Runtime", "VmName");
+String version = (String) MBeanHelper.query("java.lang:type=Runtime", "VmVersion");
+
+// dados do class loader
+Integer loaded = (Integer) MBeanHelper.query("java.lang:type=ClassLoading", "LoadedClassCount");
+Long unloaded = (Long) MBeanHelper.query("java.lang:type=ClassLoading", "UnloadedClassCount");
+
+// valor de um MBean customizado
+String atributo = (String) MBeanHelper.query(
+	"br.gov.frameworkdemoiselle.monitoring.mbean:name=Exemplo", "Atributo");]]></programlisting>
+		<tip>
+			<para>
+				O método <function>MBeanHelper.query()</function> de consulta a dados da JMX pode
+				ser usado em qualquer parte da aplicação, e em especial na criação de MBeans e
+				trappers para o Zabbix.
+			</para>
+		</tip>
+		<para>
+			No caso específico de trappers do tipo Zabbix, o <emphasis>Demoiselle Monitoring</emphasis>
+			oferece um outro recurso: a anotação <literal>@JMXQuery</literal>. Com ela, é possível
+			enviar o resultado de uma consulta JMX automaticamente na invocação de um método do trapper.
+			Para usar esse recurso, simplesmente anote o método do trapper com <literal>@JMXQuery</literal>,
+			especificando os argumentos <literal>mbeanName</literal> e <literal>mbeanAttribute</literal>
+			com respectivamente o nome do MBean e o atributo a ser consultado.
+		</para>
+		<para>
+			Veja um exemplo de utilização da anotação <literal>@JMXQuery</literal>:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@Trapper
+@Zabbix
+public class MyZabbixTrapper implements IMyTrapper {
+
+	@ItemKey("java.memory[used]")
+	@JMXQuery(mbeanName = "java.lang:type=Memory", mbeanAttribute = "HeapMemoryUsage.used")
+	public void sendUsedHeapMemory() { }
+
+}]]></programlisting>
+		<para>
+			Ou seja, basta invocar o método sem argumentos <function>MyZabbixTrapper.sendUsedHeapMemory()</function>
+			para que o valor obtido via JMX com a string <quote><literal>java.lang:type=Memory[HeapMemoryUsage.used]</literal></quote>
+			seja enviado ao servidor Zabbix para o indicador com a chave <quote><literal>java.memory[used]</literal></quote>.
+		</para>
+		<note>
+			<para>
+				Qualquer MBean registrado no servidor JMX da mesma Máquina Virtual em que está
+				rodando a aplicação pode ser consultado com o método <function>MBeanHelper.query()</function>
+				ou com a anotação <literal>@JMXQuery</literal>. Isso inclui particularmente os MBeans
+				customizados da própria aplicação.
+			</para>
+		</note>
+	</section>
+
+	<section>
+		<title>Configurando a monitoração trapping no servidor Zabbix</title>
+		<para>
+			Uma vez criada a classe trapper e tendo a aplicação Java em execução, podemos
+			efetivamente monitorar os indicadores no servidor Zabbix via trapping.
+		</para>
+		<para>
+			Para exemplificar esse processo, podemos criar a interface
+			<literal>ApplicationTrapper</literal> conforme código a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public interface ApplicationTrapper {
+
+	void sendQtdTurmasIncluidas(int qtd);
+	
+	void sendFailure(String message);
+	
+	void sendDatabaseInfo(String datasource, int connections);
+
+	void sendSystemLoadAverage();
+
+}]]></programlisting>
+		<para>
+			Uma classe do tipo trapper chamada <literal>ApplicationTrapperZabbix</literal>
+			implementa a interface anterior. Note que as diversas abordagens para definição
+			de envio de mensagens via trapper são consideradas neste exemplo:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@Trapper
+@Zabbix
+@HostName("Marumbi Server")
+public class ApplicationTrapperZabbix implements ApplicationTrapper {
+
+	@ItemKey("escola[turmas]")
+	@Override
+	public void sendQtdTurmasIncluidas(final int qtd) { }
+
+	@ItemKey("app.failure")
+	@Override
+	public void sendFailure(final String message) { }
+
+	@ItemKey("app.database[*]")
+	@Override
+	public void sendDatabaseInfo(final String datasource, final int connections) { }
+
+	@ItemKey("sys.ldavg")
+	@JMXQuery(mbeanName = "java.lang:type=OperatingSystem", mbeanAttribute = "SystemLoadAverage")
+	@Override
+	public void sendSystemLoadAverage() { }
+
+}]]></programlisting>
+		<para>
+			Desta forma a aplicação estará pronta para enviar traps para o servidor Zabbix.
+			Veremos agora como configurar o Zabbix para receber essas mensagens do host.
+		</para>
+		<para>
+			Crie o <emphasis>Host</emphasis> no Zabbix (no exemplo foi chamado <quote>Marumbi Server</quote>),
+			e em seguida crie os <emphasis>Items</emphasis> para ele. O tipo do indicador (campo
+			<literal>Type</literal>) deve ser <quote><literal>Zabbix trapper</literal></quote> e a
+			chave (campo <literal>Key</literal>) deve corresponder à string definida na anotação
+			<literal>@ItemKey</literal>. Veja:
+		</para>
+		<figure>
+			<title>Configuração de indicador no Zabbix</title>
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="monitoring/images/zabbix-trap-item.png" align="center" scalefit="1" width="100%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="monitoring/images/zabbix-trap-item.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</figure>
+		<para>
+			No exemplo, todos os métodos contidos na classe <literal>ApplicationTrapper</literal>
+			foram incluídos para monitoração via trapping no servidor Zabbix. Veja:
+		</para>
+		<figure>
+			<title>Configuração de indicadores do host no Zabbix</title>
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="monitoring/images/zabbix-trap-host.png" align="center" scalefit="1" width="100%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="monitoring/images/zabbix-trap-host.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</figure>
+		<para>
+			Inclua as seguintes instruções em algum ponto da aplicação Java e as execute:
+		</para>
+		<programlisting role="JAVA"><![CDATA[trapper.sendQtdTurmasIncluidas(210);
+
+trapper.sendFailure("Um erro ocorreu intencionalmente");
+
+trapper.sendDatabaseInfo("db1", 20);
+trapper.sendDatabaseInfo("db2", 40);
+trapper.sendDatabaseInfo("db3", 60);
+
+trapper.sendSystemLoadAverage();]]></programlisting>
+		<para>
+			Em seguida confira no Zabbix os últimos dados recebidos para o host <quote>Marumbi Server</quote>:
+		</para>
+		<figure>
+			<title>Últimos dados recebidos para o host no Zabbix</title>
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="monitoring/images/zabbix-trap-latest.png" align="center" scalefit="1" width="100%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="monitoring/images/zabbix-trap-latest.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</figure>
+	</section>
+	
+	<section>
+		<title>Usando o trapper Zabbix simples</title>
+		<para>
+			Para que o mecanismo de monitoração seja rapidamente implantado em uma aplicação, o
+			<emphasis>Demoiselle Monitoring</emphasis> fornece os <emphasis>Simple Trappers</emphasis>.
+			Tratam-se de classes do tipo trapper prontas para serem utilizadas pelo desenvolvedor,
+			ou seja, sem a necessidade de se programar trappers customizadas.
+		</para>
+		<para>
+			Basicamente o programador fará uso da interface <literal>SimpleTrapper</literal>,
+			presente no pacote <literal>br.gov.frameworkdemoiselle.monitoring.trapping</literal>:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public interface SimpleTrapper {
+    void send(String key, String message);
+    void send(String message);
+}]]></programlisting>
+		<note>
+			<para>
+				O método <function>send()</function> da interface <literal>SimpleTrapper</literal>
+				é sobrecarregado: aquele que possui os parâmetros <literal>key</literal> e
+				<literal>message</literal> recebe a chave do indicador monitorado em tempo de
+				execução. Já o método que possui apenas o parâmetro <literal>message</literal>
+				faz uso de uma chave default armazenada nas configurações da aplicação.
+			</para>
+		</note>
+		<para>
+			Junto com a interface é disponibilizada a respectiva implementação
+			<literal>SimpleTrapperZabbix</literal>, destinada ao envio de traps Zabbix.
+		</para>
+		<para>
+			Para utilizar essa funcionalidade na aplicação, basta declarar uma variável do tipo
+			<literal>SimpleTrapper</literal> e usar a anotação <literal>@Inject</literal> com o
+			qualificador <literal>@Zabbix</literal>. Em seguida, qualquer um dos métodos
+			<function>SimpleTrapper.send()</function> podem ser invocados na classe em questão.
+		</para>
+		<para>
+			Eis um exemplo de código:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class SimpleTrapperTest {
+
+    @Inject
+    @Zabbix
+    private SimpleTrapper zabbix;
+
+    public void simpleTrappingSpecifiedKey() {
+        zabbix.send("app.quote", "You say yes. I say no!");
+    }
+
+    public void simpleTrappingDefaultKey() {
+        zabbix.send("Let it be. Let it be!");
+    }
+    
+}]]></programlisting>
+		<para>
+			O método de exemplo <function>simpleTrappingSpecifiedKey()</function> envia a trap Zabbix
+			considerando a chave do indicador passada no seu primeiro argumento
+			(i.e., <literal>app.quote</literal>). Já o método
+			<function>simpleTrappingDefaultKey()</function> utiliza a chave padrão configurada no
+			arquivo <filename>demoiselle.properties</filename>:
+		</para>
+		<programlisting role="PROPERTIES"><![CDATA[frameworkdemoiselle.monitoring.zabbix.trapper.default_key = app.message]]></programlisting>
+	</section>
+	
+</chapter>

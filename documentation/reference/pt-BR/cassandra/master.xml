@@ -1,0 +1,69 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="chapter-cassandra">
+	
+	<para>
+		<title>Sobre o Apache Cassandra</title>
+		<para>
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="images/cassandra-logo.png" align="center" scalefit="1" width="75%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="images/cassandra-logo.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+			<emphasis>Cassandra</emphasis> é um armazém de dados estruturado do tipo chave-valor
+			caracterizado por ser distribuído, eventualmente consistente e altamente escalável.
+		</para>
+		<para>
+			<emphasis>Cassandra</emphasis> reune as tecnologias de sistemas distribuídos do
+			<emphasis>Dynamo</emphasis> da <emphasis>Amazon</emphasis> e o modelo de dados do
+			<emphasis>Bigtable</emphasis> da <emphasis>Google</emphasis>. Tal como o Dynamo, o
+			Cassandra é eventualmente consistente. Tal como o Bigtable, o Cassandra fornece um
+			modelo de dados baseado em famílias de colunas mais rico que nos típicos sistemas de
+			chave/valor.
+		</para>
+		<para>
+			Sendo assim, o projeto <emphasis><ulink url="http://cassandra.apache.org/">Apache
+			Cassandra</ulink></emphasis> desenvolve um banco de dados distribuído de segunda geração
+			altamente escalável, com a junção da arquitetura completamente distribuída do Dynamo e o
+			modelo de dados do Bigtable.
+		</para>
+		<para>
+			Os códigos fontes do <emphasis>Cassandra</emphasis> foram liberados pelo
+			<emphasis>Facebook</emphasis> em 2008 e atualmente o projeto é mantido por
+			desenvolvedores da <emphasis>Apache</emphasis> e contribuidores de empresas diversas.
+		</para>
+	</para>
+
+	<para>
+		<title>Sobre o Demoiselle Cassandra Guide</title>
+		<para>
+			Este documento é um tutorial do tipo "passo a passo" que visa ilustrar de forma rápida e
+			prática a instalação, configuração e funcionamento de um servidor <emphasis>Apache
+			Cassandra</emphasis> e a criação de uma aplicação Java utilizando o componente de
+			persistência <emphasis>Demoiselle Cassandra</emphasis>.
+		</para>
+		<note>
+			<para>
+				Apesar de o <emphasis>Demoiselle Cassandra</emphasis> ser simples de usar, o desenvolvimento de
+				aplicações com ele requer o conhecimento de algumas tecnologias, incluindo:
+				<itemizedlist>
+					<listitem>Linguagem Java</listitem>
+					<listitem>Banco de Dados</listitem>
+					<listitem>Eclipse IDE</listitem>
+					<listitem>Conceitos básicos de persistência</listitem>
+				</itemizedlist>
+			</para>
+		</note>
+		<note>
+			<para>
+				Esta documentação refere-se à release 1.2 do <emphasis>Demoiselle Framework</emphasis>
+				e pode diferir significativamente das versões superiores.
+			</para>
+		</note>
+	</para>
+
+</chapter>

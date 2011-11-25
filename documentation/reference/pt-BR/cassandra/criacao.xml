@@ -1,0 +1,273 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="criacao">
+
+	<title>Criação da aplicação em Java</title>
+
+	<section>
+		<title>Modelo de dados requerido</title>
+		<para>
+			Para ilustrar a modelagem de dados orientada a colunas fornecida pelo
+			<emphasis>Apache Cassandra</emphasis>, um grande exemplo são as <quote>aplicações
+			sociais</quote>, tais como <emphasis>Twitter</emphasis> ou <emphasis>Google Buzz</emphasis>.
+		</para>
+		<para>
+			As famílias de colunas (<emphasis>column families</emphasis>) envolvidas estão
+			ilustradas a seguir:
+		</para>
+		<para>
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="images/twitter-model1.png" align="center" scalefit="1" width="75%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="images/twitter-model1.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+			<itemizedlist>
+				<listitem>
+					<para>
+						<literal>Users</literal>: usuários cadastrados na aplicação
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<literal>Following</literal>: lista de pessoas seguidas para cada usuário
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<literal>Followers</literal>: lista de seguidores para cada usuário
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="images/twitter-model2.png" align="center" scalefit="1" width="75%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="images/twitter-model2.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+			<itemizedlist>
+				<listitem>
+					<para>
+						<literal>Tweets</literal> (ou <literal>Statuses</literal>): lista de
+						mensagens (ou tweets)
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<literal>Timeline</literal>: linha do tempo para cada usuário, ou seja,
+						lista de mensagens de todos as pessoas que ele segue
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<literal>Userline</literal>: linha de cada usuário, isto é, lista de
+						mensagens incluídas pelo próprio usuário
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	
+	<note>
+		<para>
+			De agora em diante neste documento, considere a variável <literal>CASSANDRA_HOME</literal>
+			como sendo o local onde o <emphasis>Apache Cassandra</emphasis> foi instalado. 
+		</para>
+	</note>
+	
+	<section>
+		<title>Configuração do Keyspace no Cassandra</title>
+		<para>
+			Antes de começarmos a criação do projeto, vamos criar o respectivo <emphasis>keyspace</emphasis>
+			no servidor <emphasis>Apache Cassandra</emphasis>. Para isso, no diretório
+			<literal>CASSANDRA_HOME</literal> abra o arquivo de configuração
+			<filename>conf/storage-conf.xml</filename> e inclua as linhas indicadas abaixo:
+		</para>
+		<programlisting role="XML"><![CDATA[<Keyspaces>
+	...
+	
+	<Keyspace Name="Twitter">
+		<ColumnFamily CompareWith="UTF8Type" Name="Users"/>
+		<ColumnFamily CompareWith="BytesType" Name="Following"/>
+		<ColumnFamily CompareWith="BytesType" Name="Followers"/>
+		<ColumnFamily CompareWith="UTF8Type" Name="Tweets"/>
+		<ColumnFamily CompareWith="BytesType" Name="Userline"/>
+		<ColumnFamily CompareWith="BytesType" Name="Timeline"/>
+		<ReplicaPlacementStrategy>
+			org.apache.cassandra.locator.RackUnawareStrategy
+		</ReplicaPlacementStrategy>
+		<ReplicationFactor>1</ReplicationFactor>
+		<EndPointSnitch>
+			org.apache.cassandra.locator.EndPointSnitch
+		</EndPointSnitch>
+	</Keyspace>
+	
+</Keyspaces>]]></programlisting>
+		<para>
+			Grave o arquivo e reinicie o servidor <emphasis>Apache Cassandra</emphasis>.
+		</para>
+		<para>
+			Abra um novo terminal e execute a instrução a seguir para abrir o console de operações
+			do cliente <emphasis>cassandra-cli</emphasis>, fornecido com os binários do Cassandra:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ ./bin/cassandra-cli --host localhost --port 9160]]></programlisting>
+		<para>
+			Em seguida, execute a instrução abaixo no prompt para verificar o novo keyspace:
+		</para>
+		<programlisting><![CDATA[cassandra> describe keyspace Twitter]]></programlisting>
+		<para>
+			Deverão ser listadas todas as famílias de colunas presentes no keyspace recém-criado.
+		</para>
+		<tip>
+			<para>
+				Se preferir, utilize o aplicativo gráfico <emphasis>Cassandra GUI</emphasis> para
+				verificar o novo keyspace.
+			</para>
+		</tip>
+	</section>
+	
+	<section>
+		<title>Construindo o projeto usando um arquétipo Maven</title>
+		<para>
+			Para criar a aplicação usando o arquétipo em linha de comando, abra um terminal e
+			execute o comando <command>mvn</command> do Maven com os argumentos ilustrados a seguir:
+		</para>
+		<programlisting role="BASH"><![CDATA[mvn archetype:generate \
+ 				-DarchetypeGroupId=org.apache.maven.archetypes \
+ 				-DarchetypeArtifactId=maven-archetype-quickstart \
+ 				-DarchetypeVersion=1.0 \
+ 				-DgroupId=br.gov.frameworkdemoiselle.sample \
+ 				-DartifactId=tuiter \
+ 				-Dversion=1.0.0-SNAPSHOT]]></programlisting>
+ 		<tip>
+ 			<para>
+ 				Se estiver usando Linux, recomenda-se instalar o pacote
+ 				<literal>demoiselle-maven2-local-repo</literal>. Para maiores informações acesse o
+ 				site do projeto <ulink url="http://demoiselle.sourceforge.net/infra/">Demoiselle Infra</ulink>. 				
+ 			</para>
+ 		</tip>
+		<para>
+			Deverá ser criado um projeto Java de nome <literal>tuiter</literal> na estrutura do Maven.
+			Se estiver usando a IDE Eclipse, importe-o no workspace corrente usando o menu
+			<guimenu>File > Import > Maven > Existing Maven Projects</guimenu>.
+		</para>
+		<para>
+			Abra o arquivo <filename>pom.xml</filename> do projeto e inclua as seguintes entradas:
+		</para>
+		<programlisting role="XML"><![CDATA[<dependencies>
+	...
+	
+	<dependency>
+		<groupId>br.gov.frameworkdemoiselle</groupId>
+		<artifactId>demoiselle-cassandra</artifactId>
+		<version>1.0.0</version>
+	</dependency>
+</dependencies>]]></programlisting>
+		<programlisting role="XML"><![CDATA[<build>
+	<plugins>
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-compiler-plugin</artifactId>
+			<version>2.3</version>
+			<configuration>
+				<source>1.6</source>
+				<target>1.6</target>
+			</configuration>
+		</plugin>
+	</plugins>
+</build>]]></programlisting>
+		<programlisting role="XML"><![CDATA[<repositories>
+	<repository>
+		<id>demoiselle.sourceforge.net-snapshot</id>
+		<url>http://demoiselle.sourceforge.net/repository/snapshot</url>
+	</repository>
+	<repository>
+		<id>demoiselle.sourceforge.net-release</id>
+		<url>http://demoiselle.sourceforge.net/repository/release</url>
+	</repository>
+</repositories>]]></programlisting>
+		<para>
+			Na IDE Eclipse, acione o menu <guimenu>Project > Clean</guimenu> e em seguida clique
+			com o botão direito e acione o menu <guimenu>Maven > Update Project Configuration</guimenu>.
+		</para>
+		<para>
+			No diretório <filename>src/test/java</filename>, crie o arquivo
+			<filename>demoiselle.properties</filename> com o conteúdo a seguir:
+		</para>
+		<programlisting><![CDATA[# server nodes hostnames and ports
+# ex: node1:9160, node2:9160, node3:9160
+#demoiselle.cassandra.server_nodes = node1:9160, node2:9160, node3:9160
+demoiselle.cassandra.server_nodes = localhost:9160
+
+# default keyspace name
+demoiselle.cassandra.default_keyspace = Twitter
+
+# default consistency level
+# see enumerator org.apache.cassandra.thrift.ConsistencyLevel
+demoiselle.cassandra.default_consistency = QUORUM
+
+# serialize unknown classes
+demoiselle.cassandra.serialize_unknown = true]]></programlisting>
+		<para>
+			No mesmo diretório, crie o arquivo <filename>log4j.properties</filename> com
+			estas linhas:
+		</para>
+		<programlisting><![CDATA[log4j.rootCategory=error, stdout
+
+log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+log4j.appender.stdout.layout.ConversionPattern=%-5p: %m %n
+
+log4j.category.br.gov.frameworkdemoiselle.cassandra=info]]></programlisting>
+		<para>
+			Crie o arquivo <filename>ehcache.xml</filename> ainda nesse diretório com as seguintes linhas:
+		</para>
+		<programlisting role="XML"><![CDATA[<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:noNamespaceSchemaLocation="../config/ehcache.xsd">
+    <diskStore path="java.io.tmpdir"/>
+    <defaultCache
+            maxElementsInMemory="10000"
+            eternal="false"
+            timeToIdleSeconds="120"
+            timeToLiveSeconds="120"
+            overflowToDisk="true"
+            maxElementsOnDisk="10000000"
+            diskPersistent="false"
+            diskExpiryThreadIntervalSeconds="120"
+            memoryStoreEvictionPolicy="LRU"
+            />
+</ehcache>]]></programlisting>
+		<para>
+			A estrutura de diretórios do projeto <literal>tuiter</literal> deve ser a seguinte ao
+			final dessa seção:
+		</para>
+<programlisting><![CDATA[tuiter/
+|-- pom.xml
+`-- src
+    |-- main
+    |   `-- java
+    |       `-- br
+    |           `-- gov
+    |               `-- frameworkdemoiselle
+    |                   `-- sample
+    |                       `-- App.java
+    `-- test
+        `-- java
+            |-- br
+            |   `-- gov
+            |       `-- frameworkdemoiselle
+            |           `-- sample
+            |               `-- AppTest.java
+            |-- demoiselle.properties
+            |-- ehcache.xml
+            `-- log4j.properties]]></programlisting>
+	</section>
+	
+</chapter>

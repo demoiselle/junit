@@ -51,7 +51,7 @@
 		<relativePath>../internal/parent/build/component/pom.xml</relativePath>
 	</parent>
 
-	<name>Demoiselle JUnit Component Build Aggregator</name>
+	<name>Build Aggregator</name>
 	<description>
 		A liberação de versões deste componente deve ser feita a partir deste build, que fará automaticamente o build
 		de todos os artefatos com versionamento sincronizado. Jamais gere uma versão deste componente sem utilizar este build.

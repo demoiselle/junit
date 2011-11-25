@@ -1,0 +1,128 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="usuario">
+
+	<title>Armazenando dados de usuários</title>
+
+	<section>
+		<title>Criação da entidade Usuario</title>
+		<para>
+			No pacote <literal>br.gov.frameworkdemoiselle.sample.tuiter.domain</literal>, crie a
+			classe <literal>Usuario</literal> contendo as linhas a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@CassandraEntity(columnFamily = "Users")
+public class Usuario {
+
+	@KeyProperty
+	private String login;
+	
+	private String nome;
+	private String senha;
+	private Integer idade;
+	private Double peso;
+	private boolean ativo;
+	
+}]]></programlisting>
+		<note>
+			<para>
+				Por motivo de clareza nos códigos, foram omitidos os métodos
+				<emphasis>getters</emphasis> e <emphasis>setters</emphasis> do código.
+				Lembre-se de implementá-los nas classes.
+			</para>
+		</note>
+		<tip>
+			<para>
+				As anotações <literal>@CassandraEntity</literal> e <literal>@KeyProperty</literal>
+				estão no pacote <literal>br.gov.frameworkdemoiselle.cassandra.annotation</literal>.
+				Na IDE Eclipse, utilize o atalho <guimenu>Ctrl+Shift+O</guimenu> para que elas
+				sejam importadas automaticamente na classe.
+			</para>
+		</tip>
+	</section>
+
+	<section>
+		<title>Unidade de persistência UsuarioDAO</title>
+		<para>
+			No pacote <literal>br.gov.frameworkdemoiselle.sample.tuiter.persistence</literal>, crie a
+			classe <literal>UsuarioDAO</literal> contendo as linhas a seguir:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class UsuarioDAO extends CassandraEntityDAO<Usuario> {
+}]]></programlisting>
+		<note>
+			<para>
+				A superclasse <literal>CassandraEntityDAO</literal> está contida no pacote
+				<literal>br.gov.frameworkdemoiselle.cassandra</literal>.
+			</para>
+		</note>
+	</section>
+
+	<section>
+		<title>Classe de testes Tuiter</title>
+		<para>
+			No diretório de testes <filename>src/test/java</filename>, crie o pacote
+			<literal>br.gov.frameworkdemoiselle.sample.tuiter</literal> e dentro dele a classe
+			<literal>Tuiter</literal>, inicialmente com o conteúdo abaixo:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class Tuiter {
+
+	UsuarioDAO usuarioDAO;
+	
+	public static void main(String[] args) {
+		Tuiter app = new Tuiter();
+		app.criarUsuario();
+	}
+
+	public Tuiter() {
+		usuarioDAO = new UsuarioDAO();
+	}
+	
+	private void criarUsuario() {
+		Usuario u = new Usuario();
+		u.setLogin("chico");
+		u.setNome("Francisco Filho");
+		u.setSenha("secreta123");
+		u.setIdade(35);
+		u.setPeso(82.75);
+		u.setAtivo(true);
+		usuarioDAO.save(u);
+		
+		u = new Usuario();
+		u.setLogin("nice");
+		u.setNome("Eunice Santos");
+		u.setSenha("seilah456");
+		u.setIdade(30);
+		u.setPeso(67.42);
+		u.setAtivo(false);
+		usuarioDAO.save(u);
+		
+		u = new Usuario();
+		u.setLogin("iara");
+		u.setNome("Iara Firmino");
+		usuarioDAO.save(u);
+	}
+	
+}]]></programlisting>
+	</section>
+
+	<section>
+		<title>Execução de testes e verificação</title>
+		<para>
+			Rode a classe <literal>Tuiter</literal> como uma aplicação Java. Em seguida, abra um
+			cliente do Apache Cassandra e verifique a inclusão dos valores na família de colunas
+			<literal>Users</literal> no keyspace <literal>Twitter</literal>.
+		</para>
+		<para>
+			Veja o resultado no aplicativo <emphasis>Cassandra GUI</emphasis>:
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="images/gui-users.png" align="center" scalefit="1" width="75%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="images/gui-users.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</para>
+	</section>
+
+</chapter>

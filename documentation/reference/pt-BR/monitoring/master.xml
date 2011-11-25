@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE part PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<part id="monitoring-master">
+
+	<title>Demoiselle Monitoring</title>
+	
+	<partintro>
+		<para>
+			O <emphasis>Demoiselle Monitoring</emphasis> é um componente para monitoração de
+			aplicações em Java desenvolvidas com o <emphasis>Demoiselle Framework</emphasis>.
+		</para>
+		<para>
+			Como objetivo geral, o componente fornece mecanismos que possibilitam a uma aplicação Java:
+			<itemizedlist>
+				<listitem>
+					<para>
+						responder a requisições provenientes de um servidor
+						(modalidade <emphasis>polling</emphasis>)
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						enviar automaticamente notificações a um servidor
+						(modalidade <emphasis>trapping</emphasis>)
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+		<note>
+			<para>
+				Atualmente o <emphasis>Demoiselle Monitoring</emphasis> considera as seguintes
+				tecnologias e padrões de monitoramento: JMX, SNMP e Zabbix.
+			</para>
+		</note>
+	</partintro>
+	
+	<!-- capítulos -->
+	<xi:include href="introducao.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+	<xi:include href="configuracao.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+	<xi:include href="uso-jmx.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+	<xi:include href="uso-snmp-polling.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+	<xi:include href="uso-snmp-trapping.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+	<xi:include href="uso-zabbix-polling.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+	<xi:include href="uso-zabbix-trapping.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+	<xi:include href="uso-varios.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+	<xi:include href="checkers.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+	
+	<!-- apêndice -->
+	<xi:include href="glossario.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+	
+</part>

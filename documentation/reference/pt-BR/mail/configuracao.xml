@@ -1,0 +1,127 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="mail-configuracao">
+
+	<title>Configuração do Mail</title>
+	<para>
+		Vamos iniciar a apresentação do componente demonstrando os passos que são necessários para configurá-lo. Como
+		será visto, são poucos e não tomarão muito tempo ou esforço.
+	</para>
+
+	<section>
+		<title>Configuração do Maven</title>
+		<para>
+			Primeiro, precisamos informar no seu projeto que há uma dependência para um componente do Demoiselle. A configuração é bem simples, basta adicionar uma sessão <literal>dependency</literal>
+			igual ao da listagem abaixo.
+		</para>
+		<programlisting role="XML"><![CDATA[<dependency>
+	<groupId>br.gov.frameworkdemoiselle.component</groupId>
+	<artifactId>demoiselle-mail</artifactId>
+	<version>2.0.0</version>
+	<type>jar</type>
+	<scope>compile</scope>
+</dependency>]]></programlisting>
+		<para>
+			Fique atento apenas para a versão do componente. No momento em que escrevíamos esta documentação, o Demoiselle Mail encontrava-se na versão 2.0.0. Verifique constantemente nossos repositórios
+			e fique sempre atento a nossos informes sobre o lançamento de novas versões!
+		</para>
+	</section>
+
+	<section>
+		<title>Sessão</title>
+		<para>
+			Para realizar o envio de e-mails é necessário ter uma instância da classe <classname>javax.mail.Session</classname>. Ela contém todas
+			as informações necessárias para que a API do JavaMail possa realizar o envio e o recebimento de e-mails. Como esta classe
+			será instanciada, depende da estratégia que você queira adotar. Esta sessão pode ser configurada manualmente ou obtida
+			através de um servidor, usando JNDI. O Demoiselle lhe permite as duas opções. Na primeira, você colocará todas
+			as configurações necessárias para acessar o servidor de e-mail no arquivo <filename>demoiselle.properties</filename> e a conexão será feita
+			diretamente. Na segunda opção, pode usar o mesmo arquivo apenas para informar se o servidor 
+			que provê esta instância é um Tomcat ou JBoss. Neste último caso, as configurações de acesso ao servidor de e-mail
+			são de responsabilidade do servidor.
+		</para>
+		<section>
+			<title>Configuração Manual</title>
+			<para>
+				Este tipo de configuração requer que você edite o arquivo demoiselle.properties e defina as informações
+				necessárias para se conectar em um servidor de e-mail. As configurações 	necessárias são basicamente: endereço do
+				servidor de e-mail, usuário, senha do usuário e tipo de segurança. Caso ainda não exista, crie o arquivo
+				demoiselle.properties na pasta <emphasis>/src/main/resources</emphasis> de seu projeto e selecione-o para edição. As opções que podem ser
+				usadas, são:
+			</para>
+			<table border="1">
+				<title>Configurações de e-mail no demoiselle.properties</title>
+				<thead>
+					<th>Opção</th>
+					<th>Tipo de Dados</th>
+					<th>Descrição</th>
+				</thead>
+					<tr>
+						<td>frameworkdemoiselle.mail.user</td>
+						<td>Alfanumérico</td>
+						<td>O nome do usuário que será usado para realizar a conexão no servidor.</td>
+					</tr>
+					<tr>
+						<td>frameworkdemoiselle.mail.password</td>
+						<td>Alfanumérico</td>
+						<td>A senha do usuário para conexão ao servidor.</td>
+					</tr>
+					<tr>
+						<td>frameworkdemoiselle.mail.serverHost</td>
+						<td>Alfanumérico</td>
+						<td>Endereço do servidor de e-mail. O tipo mais comum é um servidor de SMTP.</td>
+					</tr>
+					<tr>
+						<td>frameworkdemoiselle.mail.serverPort</td>
+						<td>Numérico</td>
+						<td>A porta que deve ser usada para conectar no servidor.</td>
+					</tr>
+					<tr>
+						<td>frameworkdemoiselle.mail.enable.ssl</td>
+						<td>true | false</td>
+						<td>Informa se a conexão com o servidor deve ser uma conexão segura usando SSL.</td>
+					</tr>
+					<tr>
+						<td>frameworkdemoiselle.mail.auth</td>
+						<td>true | false</td>
+						<td>Informa se é necessária autenticação para se conectar no servidor.</td>
+					</tr>
+					<tr>
+						<td>frameworkdemoiselle.mail.type</td>
+						<td>local | provided</td>
+						<td>Informar se a conexão deve ser configurada manualmente ou obtida de um servidor.</td>
+					</tr>
+					<tr>
+						<td>frameworkdemoiselle.mail.enable.tls</td>
+						<td>true | false</td>
+						<td>Informa se a conexão com o servidor deve ser uma conexão segura usando STARTTLS.</td>
+					</tr>
+					<tr>
+						<td>frameworkdemoiselle.mail.require.tls</td>
+						<td>true | false</td>
+						<td>Informa se a conexão com o servidor PRECISA ser uma conexão segura usando TLS.</td>
+					</tr>
+			</table>
+			<para>
+				Com estas configurações, você já está apto para realizar o envio de e-mails.
+			</para>
+		</section>
+		<section>
+			<title>Sessão Provida</title>
+			<para>
+				Quando sua aplicação está sendo executada dentro de um Tomcat, JBoss ou outro servidor qualquer, você pode
+				obter uma sessão, já contendo todas as configurações, do próprio servidor. Neste caso, estas configurações já são
+				providas pelo servidor e basta para você obter a sessão dele. Primeiro, edite o arquivo <filename>demoiselle.properties</filename> e 
+				adicione a opção <emphasis>frameworkdemoiselle.mail.type=provided</emphasis>. Depois, você deve colocar também a opção 
+				<emphasis>frameworkdemoiselle.mail.lookup_class</emphasis>. O valor vai depender de qual servidor você está usando.
+			</para>
+			<para>
+				O componente de E-mail do Demoiselle já lhe provê duas opções, sendo elas: 
+				<classname>br.gov.frameworkdemoiselle.mail.internal.implementation.TomcatLookup</classname> e
+				<classname>br.gov.frameworkdemoiselle.mail.internal.implementation.JBossLookup</classname>. 
+				Feito isto, não é necessária mais nenhuma configuração.
+			</para>
+		</section>
+	</section>
+
+</chapter>

@@ -1,0 +1,238 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="mail-utilizacao">
+
+	<title>Utilização do Mail</title>
+	
+	<para>
+		Vamos ver agora como usar o componente para realizar o envio de e-mails a partir de sua aplicação. Toda a API é baseada em uma DSL simples e 
+		fácil de usar. Veremos, neste capítulo, todas as opções disponíveis na API.
+	</para>
+	<tip>
+		A sigla DSL significa Domain Specific Language. São linguagens criadas para um propósito específico, visando a solução de problemas
+		com escopo bem definido e fechado.
+	</tip>
+	<section>
+		<title>Primeiro Exemplo</title>
+		<para>
+			Uma vez que temos todas as configurações feitas, já podemos iniciar o envio de e-mail em nossa aplicação. Para isto, você precisa ter
+			uma instância da interface <emphasis>Mail</emphasis> usando o mecanismo de injeção disponível no Demoiselle. Neste primeiro exemplo,
+			vamos fazer um envio simples de e-mail, contendo apenas um assunto, corpo, de e para. 
+			<programlisting role="JAVA"><![CDATA[public class Teste {
+
+	@Inject
+	private Mail mail;
+	
+	public void enviar() {
+		mail
+			.to("from@server.com")
+			.from("to@server.com")
+			.body().text("Meu Primeiro E-mail")
+			.subject("Assunto")
+			.send();
+   }
+}]]></programlisting>
+		</para>
+		<para>
+			A API é bem simples e auto-explicativa. A interface Mail contém métodos que denotam ações comuns no envio de e-mail, como <methodname>bcc()</methodname>
+			, <methodname>cc()</methodname>, <methodname>from()</methodname>, <methodname>to()</methodname>,
+			<methodname>attach()</methodname> e etc. 
+			Caso você use uma IDE que possui o recurso de autocomplete, seu esforço será ainda menor. Abaixo está a interface <classname>Mail</classname>
+			e os métodos disponíveis.
+		</para>
+		<programlisting role="JAVA"><![CDATA[public interface Mail {
+	public Mail from(String address);
+	public Mail from(String address, String name);
+	public Mail from(InternetAddress address);
+	public Mail replyTo(String address);
+	public Mail replyTo(String address, String name);
+	public Mail replyTo(InternetAddress emailAddress);
+	public Mail to(String address);
+	public Mail to(String address, String name);
+	public Mail to(InternetAddress address);
+	public Mail cc(String address);
+	public Mail cc(String address, String name);
+	public Mail cc(InternetAddress address);
+	public Mail bcc(String address);
+	public Mail bcc(String address, String name);
+	public Mail bcc(InternetAddress address);
+	public Importance importance();
+	public Mail deliveryReceipt(String address);
+	public Mail readReceipt(String address);
+	public Mail subject(String value);
+	public Body body();
+	public BaseMessage send();
+	public Attach attach();
+}]]></programlisting>
+	</section>
+	<section>
+		<title>Definindo a Importância</title>
+		<para>
+			Caso haja necessidade de definir o nível de urgência, ou importância, do seu e-mail, basta usar conforme o exemplo abaixo.
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class Teste {
+
+	@Inject
+	private Mail mail;
+	
+	public void enviar() {
+		mail
+			.to("from@server.com")
+			.from("to@server.com")
+			.body().text("Meu Primeiro E-mail")
+			.subject("Assunto")
+			.importance().high()
+			.send();
+   }
+}]]></programlisting>
+		<para>
+			Neste caso, você definiu a importância como alta.  Também existem as opções NORMAL e LOW.
+		</para>
+		<tip>
+			<para>
+				A importância de um e-mail depende bastante do cliente de e-mail que o destinatário do e-mail está usando. Alguns ignoram esta informação e nada exibem.
+				Outros exibem ícones para mostrar que o remetente pede urgência em sua leitura. Infelizmente, nem todos clientes de e-mail fornecem meios para ver
+				de forma fácil o nível de urgência dos e-mails que recebe.
+			</para>
+		</tip>
+	</section>
+	<section>
+		<title>Incluindo Anexos</title>
+		<para>
+			A API também provê a possibilidade de se incluir arquivos em anexo ao e-mail. O anexo pode ser obtido da máquina local ou de uma URL. No
+			caso de arquivos obtidos da máquina local, é possível passá-lo através de uma instância de File ou apenas informando o nome do arquivo. 
+			Neste primeiro exemplo, vamos anexar um arquivo de uma URL.
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class Teste {
+
+	@Inject
+	private Mail mail;
+	
+	public void enviar() {
+		mail
+			.to("from@server.com")
+			.from("to@server.com")
+			.body().text("Meu Primeiro E-mail")
+			.subject("Assunto")
+			.attach().url("http://www.frameworkdemoiselle.gov.br/logo.jpg", "logo.jpg").inline()
+			.send();
+   }
+}]]></programlisting>
+		<para>
+			Estamos incluíndo um arquivo de imagem e pedindo para que este arquivo seja exibido dentro da própria mensagem. 
+			Para isto, usamos a opção <methodname>inline()</methodname>.
+			No próximo exemplo, vamos anexar um arquivo que está na própria máquina.
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class Teste {
+
+	@Inject
+	private Mail mail;
+	
+	public void enviar() {
+		mail
+			.to("from@server.com")
+			.from("to@server.com")
+			.body().text("Meu Primeiro E-mail")
+			.subject("Assunto")
+			.importance().high()
+			.attach().file("documento.doc").attachment()
+			.send();
+   }
+}]]></programlisting>
+	</section>
+	<section>
+		<title>Enviando E-mails em HTML</title>
+		<para>
+			O envio de e-mails com conteúdo HTML é bem simples. Vamos utilizar os exemplos anteriores e apenas modificar uma chamada simples de método.
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class Teste {
+
+	@Inject
+	private Mail mail;
+	
+	public void enviar() {
+		mail
+			.to("from@server.com")
+			.from("to@server.com")
+			.body().html("<strong>Meu</strong> Primeiro E-mail")
+			.subject("Assunto")
+			.importance().high()
+			.attach().file("documento.doc").attachment()
+			.send();
+   }
+}]]></programlisting>
+		<para>
+			A mudança está na linha onde tem <methodname>body()</methodname>. Agora, fizemos uma chamada para o método 
+			<methodname>html()</methodname> e não mais para <methodname>text()</methodname>. Apenas com isto, você já pode passar
+			código HTML no lugar de apenas texto. 
+		</para>
+	</section>
+	<section>
+		<title>Enviando Cópias BCC e CC</title>
+		<para>
+			O envio de cópias Carbon e Blind Carbon é tão simples quanto definir o remetente e o destinatário do e-mail. Veja o exemplo abaixo. 
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class Teste {
+
+	@Inject
+	private Mail mail;
+	
+	public void enviar() {
+		mail
+			.to("from@server.com")
+			.from("to@server.com")
+			.bcc("bcc1@server.com")
+			.bcc("bcc2@server.com")
+			.cc("cc1@server.com")
+			.cc("cc2@server.com.br")
+			.body().html("<strong>Meu</strong> Primeiro E-mail")
+			.subject("Assunto")
+			.importance().high()
+			.attach().file("documento.doc").attachment()
+			.send();
+   }
+}]]></programlisting>
+		<para>
+			Observe que para enviar para mais de um e-mail, basta repetir a chamada ao método com um e-mail diferente. O mesmo vale para todas as demais opções,
+			como to, from, attach, readReceipt, deliveryReceipt e replyTo.
+		</para>
+	</section>
+	<section>
+		<title>Confirmações de Entrega e Leitura</title>
+		<para>
+			Em alguns casos, você pode também incluir no seu e-mail, cabeçalhos que peçam ao destinatário do e-mail para confirmar o recebimento ou a leitura do e-mail.
+			Com o componente do Demoiselle, esta ação é bastante simples. Para isto, você deve usar os métodos <methodname>deliveryReceipt</methodname> e
+			<methodname>readReceipt</methodname>, passando como parâmetro o e-mail que deve receber a confirmação. Veja o exemplo abaixo. 
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class Teste {
+
+	@Inject
+	private Mail mail;
+	
+	public void enviar() {
+		mail
+			.to("from@server.com")
+			.from("to@server.com")
+			.deliveryReceipt("from@server.com")
+			.readReceipt("from@server.com")
+			.body().html("<strong>Meu</strong> Primeiro E-mail")
+			.subject("Assunto")
+			.importance().high()
+			.send();
+   }
+}]]></programlisting>
+		<para>
+			Em ambos os casos, utilizamos o mesmo endereço de e-mail usado no FROM, o que é a prática mais comum. O método <methodname>deliveryReceipt</methodname>
+			especifica para qual e-mail será enviada a confirmação de entrega do e-mail. Já o método <methodname>readReceipt</methodname> especifica para qual
+			e-mail será enviada a confirmação de entrega do e-mail.
+		</para>
+		<tip>
+			<para>
+				Igual a como acontece com a opção para incluir a importância da mensagem, a confirmação de leitura e recebimento dependem de configurações no cliente
+				de e-mail do destinatário. O usuário pode desabilitar estas opções e o remetente nunca ficará sabendo se o e-mail foi realmente entregue ou lido.
+			</para>
+		</tip>
+	</section>
+	
+</chapter>

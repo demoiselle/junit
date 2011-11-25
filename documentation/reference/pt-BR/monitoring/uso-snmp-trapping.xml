@@ -1,0 +1,444 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="monitoring-snmp-trapping">
+
+	<title>Monitorando via SNMP (trapping)</title>
+	<para>
+		O componente <emphasis>Demoiselle Monitoring</emphasis> fornece um mecanismo simples e
+		transparente para uma aplicação Java enviar notificações do tipo trap a um servidor SNMP.
+		Trata-se de um código escrito inteiramente em linguagem Java que faz o papel do utilitário
+		<command>snmptrap</command>
+		<footnote>
+			<para>
+				Para maiores informações sobre o <command>snmptrap</command>, acesse:
+				<ulink url="http://www.net-snmp.org/docs/man/snmptrap.html"/>
+			</para>
+		</footnote>.
+	</para>
+	
+	<section>
+		<title>Configuração para os trappers SNMP</title>
+		<para>
+			Alguns parâmetros devem ser configurados na aplicação para o envio de traps SNMP pelo
+			componente <emphasis>Demoiselle Monitoring</emphasis>. Tais configurações são feitas no
+			arquivo <filename>demoiselle.properties</filename>:
+		</para>
+		<programlisting role="PROPERTIES"><![CDATA[frameworkdemoiselle.monitoring.snmp.trapper.protocol = udp
+frameworkdemoiselle.monitoring.snmp.trapper.server = 127.0.0.1
+frameworkdemoiselle.monitoring.snmp.trapper.port = 162
+frameworkdemoiselle.monitoring.snmp.trapper.community = public
+frameworkdemoiselle.monitoring.snmp.trapper.version = v1
+frameworkdemoiselle.monitoring.snmp.trapper.enterprise = 1.3.6.1.4.1.35437.1.1.2425.2011]]></programlisting>
+		<para>
+			Esses parâmetros definem o endereço e a forma de comunicação com o servidor SNMP que
+			receberá as traps, além de especificar alguns campos do cabeçalho das mensagens.
+		</para>
+	</section>
+	
+	<section>
+		<title>Criação e utilização do Trapper SNMP</title>
+		<para>
+			Ao utilizar o <emphasis>Demoiselle Monitoring</emphasis>, o desenvolvedor poderá
+			implementar facilmente suas próprias <emphasis>trappers</emphasis>. Para isso, ele pode
+			inicialmente criar uma interface contendo os métodos que enviarão as mensagens.
+			Eis um exemplo:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public interface MyTrapper {
+
+	void sendFailure(String message);
+   
+}]]></programlisting>
+		<para>
+			Em seguida ele criará a respectiva classe, anotando com o estereótipo
+			<literal>@Trapper</literal> e o qualificador <literal>@SNMP</literal> (ficará implícito
+			que se trata de um <quote>trapper para SNMP</quote>). Veja como é simples:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@Trapper
+@SNMP
+public class MyTrapperSNMP implements MyTrapper {
+
+	public void sendFailure(String message) { }
+   
+}]]></programlisting>
+		<note>
+			<para>
+				Lembre-se de que criar uma interface para o trapper e em seguida implementá-la
+				não é obrigatório, mas apenas um direcionamento. Se preferir, você pode construir a
+				classe trapper diretamente (isto é, sem usar o <literal>implements</literal>).
+				Entretanto, a aplicação será mais flexível ao considerar o uso de interfaces na
+				arquitetura de seus componentes.
+			</para>
+		</note>
+		<important>
+			<para>
+				Note que os métodos da classe trapper não precisam ser codificados, ou seja, podem
+				ficar vazios. Isso porque neles atuarão interceptadores do CDI. Na versão 1.x do
+				componente isso era realizado através de aspectos com o AspectJ.
+			</para>
+		</important>
+		<para>
+			Finalmente, para utilizar esse trapper em qualquer parte da aplicação, basta declarar
+			um campo com o tipo da interface e anotá-lo com <literal>@Inject</literal>:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class TrapperTest {
+
+	@Inject
+	@SNMP
+	private MyTrapper trapper;
+	
+	public void sendFailureMessage() {
+		trapper.sendFailure("Hello, snmpd...");
+	}
+
+}]]></programlisting>
+		<para>
+			Uma vez invocado o método <function>sendFailure()</function>, o interceptador agirá
+			sobre ele e fará o envio, de forma assíncrona, da mensagem ao servidor SNMP na forma
+			de um trap.
+		</para>
+		<para>
+			Para testar essa funcionalidade, utilize um servidor SNMP, tal como <emphasis>Net-SNMP</emphasis>
+			<footnote>
+				<para>
+					<emphasis>Net-SNMP</emphasis> é um serviço daemon que escuta e responde
+					requisições SNMP dos clientes. Para maiores informações, acesse o site
+					<ulink url="http://net-snmp.sourceforge.net/"/>.
+				</para>
+			</footnote>. Uma sugestão é iniciá-lo com o comando <command>snmptrapd -f -Le</command>. 
+			Inspecionando a LOG do servidor SNMP, eis os registros referentes aos comandos
+			executados pelo exemplo em Java:
+		</para>
+		<programlisting role="BASH"><![CDATA[2011-09-14 14:26:22 0.0.0.0(via UDP: [127.0.0.1]:10728) TRAP, SNMP v1, community public
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011 Enterprise Specific Trap (0)
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.0 = STRING: "Hello, snmpd..."]]></programlisting>
+		<para>
+			Observe os valores que foram repassados na mensagem da trap SNMP enviada ao servidor.
+			O OID da empresa (<literal>enterprises.35437.1.1.2425.2011</literal>) foi obtido
+			através do parâmetro <literal>frameworkdemoiselle.monitoring.snmp.trapper.enterprise</literal>
+			do arquivo <filename>demoiselle.properties</filename>. A versão do protocolo SNMP,
+			o endereço e a porta do servidor e a comunidade também vieram desse arquivo.
+		</para>
+		<para>
+			A única variável da mensagem SNMP foi definida automaticamente com o sufixo
+			<literal>.1.0</literal> e o tipo de dados <literal>STRING</literal>. O valor da string
+			<quote><literal>Hello, snmpd...</literal></quote> provém da chamada do método
+			<function>trapper.sendFailure()</function> no código Java.
+		</para>
+	</section>
+
+	<section>
+		<title>Customizando OIDs nas traps SNMP</title>
+		<para>
+			Num caso prático é interessante e recomendável que os códigos de identificação de objetos
+			(OIDs) da trap SNMP sejam customizados para a aplicação, especialmente quando mensagens
+			diferentes são disparadas pelo trapper.
+		</para>
+		<para>
+			O <emphasis>Demoiselle Monitoring</emphasis> considera uma classe trapper como sendo uma
+			árvore de serviços (i.e., MIB Tree) e cada um dos seus métodos pode se tornar um ramo dela.
+			Para customizar essas OIDs, basta declarar a classe trapper com a anotação
+			<literal>@MIB</literal> e anotar cada um dos seus métodos com <literal>@OID</literal>.
+		</para>
+		<para>
+			Veja um exemplo:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@Trapper
+@SNMP
+@MIB(".1.1")
+public class MyTrapperSNMP implements MyTrapper {
+
+	@OID(".5")
+	public void sendFailure(String message) { }
+
+	@OID(".7")
+	public void sendInformation(String message) { }
+	
+}]]></programlisting>
+		<tip>
+			<para>
+				Para ambas as anotações <literal>@MIB</literal> e <literal>@OID</literal> vale a
+				seguinte regra: se a string iniciar com <quote>.</quote>, haverá concatenação da OID
+				hierarquicamente superior (código relativo), caso contrário será considerada
+				integralmente a OID especificada (código absoluto).
+			</para>
+		</tip>
+		<para>
+			Ao executar o código Java invocando os métodos <code>trapper.sendFailure("Fatal Failure")</code>
+			e <code>trapper.sendInformation("Simple Info")</code>, veja como fica o resultado no servidor SNMP:
+		</para>
+		<programlisting role="BASH"><![CDATA[2011-09-15 09:32:27 0.0.0.0(via UDP: [127.0.0.1]:-12829) TRAP, SNMP v1, community public
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.5 Enterprise Specific Trap (0)
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.5.1.0 = STRING: "Fatal Failure"
+
+2011-09-15 09:32:35 0.0.0.0(via UDP: [127.0.0.1]:-26520) TRAP, SNMP v1, community public
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.7 Enterprise Specific Trap (0)
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.7.1.0 = STRING: "Simple Info"]]></programlisting>
+	</section>
+	
+	<section>
+		<title>Definindo um código específico para a trap SNMP</title>
+		<para>
+			Na verdade uma trap SNMPv1 contém três elementos além de suas variáveis
+			<footnote>
+				<para>
+					Para maiores informações sobre o formato das traps SNMP, consulte a
+					<ulink url="http://www.ietf.org/rfc/rfc1157.txt">RFC-1157</ulink>.
+				</para>
+			</footnote>: a identificação do objeto gerenciado (<emphasis>enterprise</emphasis>) e os
+			campos tipo de trap genérico (<emphasis>generic-trap</emphasis>) e código específico de
+			trap (<emphasis>specific-trap</emphasis>). Para traps customizadas, o que é o caso do
+			componente <emphasis>Demoiselle Monitoring</emphasis>, o tipo de trap genérico será
+			<literal>enterpriseSpecific(6)</literal>, restando a possibilidade de definir o
+			código específico, cujo valor default é 0.
+		</para>
+		<para>
+			Na classe trapper, para definir o código específico de trap, basta usar a anotação
+			<literal>@SpecificTrap</literal> no método desejado. Segue um exemplo de classe com
+			essa customização:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@Trapper
+@SNMP
+public class MyTrapperSNMP implements MyTrapper {
+
+	@SpecificTrap(4)
+	public void sendFailure(String message) { }
+
+	@SpecificTrap(6)
+	public void sendInformation(String message) { }
+
+}]]></programlisting>
+		<para>
+			Ao executar o código Java, observe os valores do campo <literal>Enterprise Specific Trap</literal>
+			nas traps enviadas ao servidor SNMP:
+		</para>
+		<programlisting role="BASH"><![CDATA[2011-09-15 10:32:15 0.0.0.0(via UDP: [127.0.0.1]:-20449) TRAP, SNMP v1, community public
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011 Enterprise Specific Trap (4)
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.0 = STRING: "Fatal Failure"
+
+2011-09-15 10:32:21 0.0.0.0(via UDP: [127.0.0.1]:-11555) TRAP, SNMP v1, community public
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011 Enterprise Specific Trap (6)
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.0 = STRING: "Simple Info"]]></programlisting>
+	</section>
+	
+	<section>
+		<title>Enviando traps SNMP com múltiplas variáveis</title>
+		<para>
+			Nas seções anteriores, vimos como implementar classes trapper com o componente
+			<emphasis>Demoiselle Monitoring</emphasis> definindo OIDs e tipos específicos nas
+			mensagens enviadas ao servidor SNMP. Entretanto, existe a possibilidade de serem
+			enviadas múltiplas variáveis na mesma mensagem SNMP. Até o momento nos exemplos
+			utilizamos uma única variável do tipo string.
+		</para>
+		<para>
+			Enviar múltiplas variáveis em uma trap SNMP é muito simples: basta o método em questão
+			possuir diversos argumentos. Os tipos das variáveis nos argumentos podem ser primitivos
+			ou de referência. A conversão dos tipos de dados do Java para os respectivos tipos do
+			SNMP ocorre de forma automática. 
+		</para>
+		<para>
+			Veja um exemplo de trapper contendo dois métodos sobrecarregados de nome <function>sendVars()</function>:		
+		</para>
+		<programlisting role="JAVA"><![CDATA[@Trapper
+@SNMP
+@MIB(".1.1")
+public class MyTrapperSNMP implements MyTrapper {
+
+	@OID(".2")
+	public void sendVars(String s, int i, long l, boolean b) { }
+
+	@OID(".4")
+	public void sendVars(Object o, Integer i, Long l, Boolean b) { }
+
+}]]></programlisting>
+		<para>
+			Eis um exemplo de invocação dos dois métodos em um trecho qualquer da aplicação:
+		</para>
+		<programlisting role="JAVA"><![CDATA[trapper.sendVars("abc", 123, 456789L, true);
+
+trapper.sendVars(new Date(), new Integer(234), new Long(567890L), Boolean.FALSE);]]></programlisting>
+		<para>
+			O resultado final enviado ao servidor SNMP será o seguinte:
+		</para>
+		<programlisting role="BASH"><![CDATA[2011-09-15 11:30:09 0.0.0.0(via UDP: [127.0.0.1]:-7159) TRAP, SNMP v1, community public
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.2 Enterprise Specific Trap (0)
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.2.1.0 = STRING: "abc"
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.2.2.0 = INTEGER: 123
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.2.3.0 = INTEGER: 456789
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.2.4.0 = STRING: "true"
+
+2011-09-15 11:30:14 0.0.0.0(via UDP: [127.0.0.1]:-28941) TRAP, SNMP v1, community public
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.4 Enterprise Specific Trap (0)
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.4.1.0 = STRING: "Thu Sep 15 11:30:14 2011"
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.4.2.0 = INTEGER: 234
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.4.3.0 = INTEGER: 567890
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.4.4.0 = STRING: "false"]]></programlisting>
+		<para>
+			Ou seja, cada um dos argumentos dos métodos é transformado em uma variável na mensagem
+			da trap SNMP. Note que o OID das variáveis é sequencial e automático, utilizando o
+			prefixo definido nas anotações <literal>@MIB</literal> e <literal>@OID</literal> e
+			finalizando com <quote><literal>.0</literal></quote>, pois são escalares.
+		</para>
+		<note>
+			<para>
+				Quando o tipo de dados do Java não tem relação direta com um tipo do SNMP, é
+				utilizado <emphasis>Octect String</emphasis>, ou seja, é considerado o
+				formato textual da variável. Ex: <literal>boolean</literal>,
+				<literal>Date</literal> ou <literal>Object</literal> são todos
+				convertidos para <literal>STRING</literal>.
+			</para>
+		</note>
+	</section>
+	
+	<section>
+		<title>Especificando os tipos SNMP das variáveis</title>
+		<para>
+			Nas seções anteriores todos os exemplos que vimos utilizavam somente os tipos de dados
+			<literal>INTEGER</literal> ou <literal>STRING</literal> para as variáveis. Todavia, a
+			especificação SNMP prevê diversos tipos de dados específicos que fornecem alguma
+			semântica. O <emphasis>Demoiselle Monitoring</emphasis> fornece suporte para a definição
+			destes tipos específicos, a qual veremos a seguir.
+		</para>
+		<tip>
+			<para>
+				Para maiores informações sobre os tipos de dados do SNMP, consulte as especificações
+				<ulink url="http://tools.ietf.org/html/rfc1155">RFC-1155</ulink> e
+				<ulink url="http://tools.ietf.org/html/rfc2578">RFC-2578</ulink>.
+			</para>
+		</tip>
+		<para>
+			Para definir um tipo de dado específico do SNMP, basta declarar o argumento do método
+			precedido da anotação correspondente ao tipo (ex: <literal>@Counter32</literal>,
+			<literal>@Gauge32</literal> ou <literal>@Integer32</literal>). A lista completa de
+			tipos de dados SNMP e as anotações providas pelo <emphasis>Demoiselle Monitoring</emphasis>
+			podem ser conferidas em <link linkend="snmp-tipos-dados" endterm="snmp-tipos-dados.title"/>.
+		</para>
+		<para>
+			Veja no exemplo a seguir uma classe trapper que possui o método
+			<function>sendNumbers()</function> com cinco argumentos do tipo <literal>int</literal>.
+			Para que sejam considerados mais do que apenas <literal>INTEGER</literal>, os parâmetros
+			foram devidamente anotados com os tipos numéricos. Na mesma classe, o método
+			<function>sendObjects()</function> faz uso de tipos avançados, como IP Address e OID.
+		</para>
+		<programlisting role="JAVA"><![CDATA[@Trapper
+@SNMP
+@MIB(".1.1")
+public class MyTrapperSNMP implements MyTrapper {
+
+	@OID(".6")
+	public void sendNumbers(int a, @Integer32 int b,
+			@Counter32 int c, @Gauge32 int d, @TimeTicks int e) { }
+
+	@OID(".8")
+	public void sendObjects(@IPAddress String ip,
+			@ObjectIdentifier String oid, @OctetString String str) { }
+
+}]]></programlisting>
+		<tip>
+			As anotações de tipos de dados SNMP fornecidas pelo componente estão no pacote
+			<literal>br.gov.frameworkdemoiselle.monitoring.annotation.snmp.type</literal>.
+		</tip>
+		<para>
+			Eis um exemplo de invocação dos dois métodos da trapper em qualquer trecho da aplicação:
+		</para>
+		<programlisting role="JAVA"><![CDATA[trapper.sendNumbers(100, 200, 300, 400, 500);
+
+trapper.sendObjects("192.168.0.1", "1.3.6.1.4.1", "um texto");]]></programlisting>
+		<para>
+			O resultado recebido por um servidor SNMP será o seguinte:
+		</para>
+		<programlisting role="BASH"><![CDATA[2011-09-15 15:12:45 0.0.0.0(via UDP: [127.0.0.1]:-20608) TRAP, SNMP v1, community public
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.6 Enterprise Specific Trap (0)
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.6.1.0 = INTEGER: 100
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.6.2.0 = INTEGER: 200
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.6.3.0 = Counter32: 300
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.6.4.0 = Gauge32: 400
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.6.5.0 = Timeticks: (500) 0:00:05.00
+
+2011-09-15 15:12:50 0.0.0.0(via UDP: [127.0.0.1]:-29915) TRAP, SNMP v1, community public
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.8 Enterprise Specific Trap (0)
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.8.1.0 = IpAddress: 192.168.0.1
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.8.2.0 = OID: SNMPv2-SMI::enterprises
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.8.3.0 = STRING: "um texto"]]></programlisting>
+		<para>
+			Perceba que a grande diferença é que os seguintes tipos de dados SNMP, os quais carregam
+			significado, são transmitidos na mensagem SNMP: <literal>Counter32</literal>,
+			<literal>Gauge32</literal>, <literal>TimeTicks</literal>, <literal>IpAddress</literal> e
+			<literal>OID</literal>.
+		</para>
+	</section>
+	
+	<section>
+		<title>Usando o trapper SNMP simples</title>
+		<para>
+			Para que o mecanismo de monitoração seja rapidamente implantado em uma aplicação, o
+			<emphasis>Demoiselle Monitoring</emphasis> fornece os <emphasis>Simple Trappers</emphasis>.
+			Tratam-se de classes do tipo trapper prontas para serem utilizadas pelo desenvolvedor,
+			ou seja, sem a necessidade de se programar trappers customizadas.
+		</para>
+		<para>
+			Basicamente o programador fará uso da interface <literal>SimpleTrapper</literal>,
+			presente no pacote <literal>br.gov.frameworkdemoiselle.monitoring.trapping</literal>:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public interface SimpleTrapper {
+    void send(String key, String message);
+    void send(String message);
+}]]></programlisting>
+		<note>
+			<para>
+				O método <function>send()</function> da interface <literal>SimpleTrapper</literal>
+				é sobrecarregado: aquele que possui os parâmetros <literal>key</literal> e
+				<literal>message</literal> recebe a chave (i.e., a OID da trap) em tempo de
+				execução. Já o método que possui apenas o parâmetro <literal>message</literal>
+				faz uso de uma chave default armazenada nas configurações da aplicação.
+			</para>
+		</note>
+		<para>
+			Junto com a interface é disponibilizada a respectiva implementação
+			<literal>SimpleTrapperSNMP</literal>, destinada ao envio de traps SNMP.
+		</para>
+		<para>
+			Para utilizar essa funcionalidade na aplicação, basta declarar uma variável do tipo
+			<literal>SimpleTrapper</literal> e usar a anotação <literal>@Inject</literal> com o
+			qualificador <literal>@SNMP</literal>. Em seguida, qualquer um dos métodos
+			<function>SimpleTrapper.send()</function> podem ser invocados na classe em questão.
+		</para>
+		<para>
+			Eis um exemplo de código:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class SimpleTrapperTest {
+
+    @Inject
+    @SNMP
+    private SimpleTrapper snmp;
+
+    public void simpleTrappingSpecifiedKey() {
+        snmp.send("1.3.6.1.4.1.35437.1.1.2425.2011.1.1", "You say yes. I say no!");
+    }
+
+    public void simpleTrappingDefaultKey() {
+        snmp.send("Let it be. Let it be!");
+    }
+    
+}]]></programlisting>
+		<para>
+			O método de exemplo <function>simpleTrappingSpecifiedKey()</function> envia a trap SNMP
+			considerando a OID passada no seu primeiro argumento
+			(i.e., <literal>1.3.6.1.4.1.35437.1.1.2425.2011.1.1</literal>). Já o método
+			<function>simpleTrappingDefaultKey()</function> utiliza a OID padrão configurada no
+			arquivo <filename>demoiselle.properties</filename>:
+		</para>
+		<programlisting role="PROPERTIES"><![CDATA[frameworkdemoiselle.monitoring.snmp.trapper.enterprise = 1.3.6.1.4.1.35437.1.1.2425.2011]]></programlisting>
+		<para>
+			O resultado da execução do código de exemplo pode ser observado na LOG do servidor SNMP:
+		</para>
+		<programlisting role="BASH"><![CDATA[2011-09-16 11:13:10 0.0.0.0(via UDP: [127.0.0.1]:-12961) TRAP, SNMP v1, community public
+	SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1 Enterprise Specific Trap (0)
+	SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.1.1.0 = STRING: "You say yes. I say no!"
+
+2011-09-16 11:13:15 0.0.0.0(via UDP: [127.0.0.1]:-23825) TRAP, SNMP v1, community public
+	SNMPv2-SMI::enterprises.35437.1.1.2425.2011 Enterprise Specific Trap (0)
+	SNMPv2-SMI::enterprises.35437.1.1.2425.2011.1.0 = STRING: "Let it be. Let it be!"]]></programlisting>
+	</section>
+	
+</chapter>

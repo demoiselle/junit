@@ -1,0 +1,690 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="monitoring-snmp-polling">
+
+	<title>Monitorando via SNMP (polling)</title>
+	<para>
+		Para a abordagem SNMP, a arquitetura envolve a criação e exportação de MBeans. No mesmo
+		servidor Java será levantado um <emphasis>Agente SNMP</emphasis> na porta 1161 em UDP.
+	</para>
+	<note>
+		<para>
+			O <emphasis>Agente SNMP</emphasis> não é um servidor SNMP convencional, tal como
+			<ulink url="http://www.net-snmp.org/">Net-SNMP</ulink>, mas um programa que entende o
+			protocolo SNMP e responde a requisições referentes a uma árvore de serviços restrita.
+		</para>
+	</note>
+	<para>
+		Internamente existe um mapeamento entre atributos de um MBean exportado no servidor JMX e
+		os objetos disponibilizados na árvore SNMP.
+	</para>
+	
+	<section>
+		<title>Configuração do Agente SNMP</title>
+		<para>
+			Alguns parâmetros devem ser configurados na aplicação para o levantamento do serviço
+			SNMP pelo componente <emphasis>Demoiselle Monitoring</emphasis>. Tais configurações são
+			feitas no arquivo <filename>demoiselle.properties</filename>:
+		</para>
+		<programlisting role="PROPERTIES"><![CDATA[frameworkdemoiselle.monitoring.snmp.agent.enabled = true
+frameworkdemoiselle.monitoring.snmp.agent.protocol = udp
+frameworkdemoiselle.monitoring.snmp.agent.port = 1161
+frameworkdemoiselle.monitoring.snmp.agent.address = *
+frameworkdemoiselle.monitoring.snmp.agent.mib.root = 1.3.6.1.4.1.35437.1]]></programlisting>
+		<para>
+			O acesso aos objetos disponibilizados nas árvores de serviço pelo agente SNMP pode ser
+			restringido, mas por enquanto consideremos apenas SNMP v1 e v2. Crie o arquivo
+			<filename>snmp-security.xml</filename> com o conteúdo abaixo: 
+		</para>
+		<programlisting role="XML"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<snmp-security>
+	<access-control>
+		<views>
+			<view name="full">
+				<include subtree="1.3" />
+			</view>
+		</views>
+		<groups>
+			<group name="v1v2group">
+				<security name="public" model="SNMPv1"/>
+				<security name="public" model="SNMPv2c"/>
+				<access context="" model="ANY" auth="false" priv="false" exact="true">
+					<read view="full" />
+					<write view="full" />
+					<notify view="full" />
+				</access>
+			</group>
+		</groups>
+	</access-control>
+</snmp-security>]]></programlisting>
+		<para>
+			Tendo definidos esses arquivos, ao executar a aplicação o
+			<emphasis>Agente SNMP</emphasis> será automaticamente inicializado.
+		</para>
+	</section>
+	
+	<section>
+		<title>Criação do MBean e da árvore MIB</title>
+		<para>
+			Uma vez devidamente configurado o <emphasis>Agente SNMP</emphasis>, as árvores MIB
+			a serem disponibilizadas por ele devem ser criadas pelo desenvolvedor. Veremos como
+			fazer isso nessa seção. Primeiramente é preciso criar uma interface simples contendo
+			os métodos a serem expostos, tal como no exemplo:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public interface ExemploMBean {
+
+	String getAtributo();
+
+}]]></programlisting>
+		<para>
+			Em seguida, uma classe anotada com os estereótipos <literal>@MBean</literal> e
+			<literal>@MIB</literal> deve implementar os métodos dessa interface:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@MBean
+@MIB(".2")
+public class Exemplo implements ExemploMBean {
+
+   @OID(".1")
+   public String getAtributo() {
+      return "abc";
+   }
+
+}]]></programlisting>
+		<important>
+			<para>
+				Lembre-se de que a classe deve implementar uma interface de mesmo nome
+				acrescida do sufixo <quote><literal>MBean</literal></quote>.
+			</para>
+		</important>
+		<para>
+			Opcionalmente os objetos a serem disponibilizados na árvore podem ser marcados com a
+			anotação <literal>@OID</literal>.
+		</para>
+		<tip>
+			<para>
+				As anotações <literal>@MBean</literal> e <literal>@MIB</literal> estão no
+				pacote <literal>br.gov.frameworkdemoiselle.monitoring.stereotype</literal>,
+				enquanto que <literal>@OID</literal> se localiza em
+				<literal>br.gov.frameworkdemoiselle.monitoring.annotation.snmp</literal>.
+			</para>
+		</tip>
+	</section>
+
+	<section>
+		<title>Consumindo os recursos via cliente SNMP</title>
+		<para>
+			Tendo o serviço SNMP levantado pelo agente, podemos usar ferramentas tais como um
+			cliente SNMP qualquer para efetuar operações. Eis um exemplo de utilização do
+			<command>snmpget</command>
+			<footnote>
+				<para>
+					Para maiores informações sobre o <command>snmpget</command>, acesse:
+					<ulink url="http://www.net-snmp.org/docs/man/snmpget.html"/>
+				</para>
+			</footnote>
+			para obter o valor do objeto exportado na árvore:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ snmpget -v 1 -c public localhost:1161 1.3.6.1.4.1.35437.1.2.1.0
+SNMPv2-SMI::enterprises.35437.1.2.1.0 = STRING: "abc"]]></programlisting>
+		<para>
+			Note que o <emphasis>OID</emphasis> (i.e., identificador de objeto) usado foi o
+			<quote><literal>1.3.6.1.4.1.35437.1.2.1.0</literal></quote>. Ele é resultante da concatenação de
+			<quote><literal>1.3.6.1.4.1.35437.1</literal></quote> (proveniente do arquivo
+			<filename>demoiselle.properties</filename>) com <quote><literal>.2</literal></quote>
+			(declarado em <literal>@MIB</literal>) e <quote><literal>.1</literal></quote>
+			(declarado em <literal>@OID</literal>). O sufixo <quote><literal>.0</literal></quote>
+			é um indicador de valor escalar em SNMP e sempre será incluído automaticamente.
+		</para>
+		<tip>
+			<para>
+				No <emphasis>Debian GNU/Linux</emphasis> é disponibilizado o pacote <literal>snmp</literal>
+				(<ulink url="http://packages.debian.org/snmp/"/>): uma coleção de clientes de linha de
+				comando destinados a efetuar requisições SNMP aos agentes. Para instalar esse pacote,
+				basta executar <command>apt-get install snmp</command> como super-usuário.
+			</para>
+		</tip>
+	</section>
+	
+	<section>
+		<title>Definindo o tipo de dados SNMP</title>
+		<para>
+			O protocolo SNMP reconhece tipos de dados próprios. O componente
+			<emphasis>Demoiselle Monitoring</emphasis> internamente faz um mapeamento automático
+			dos tipos de dados do Java (primitivos e de referência) para os tipos de dados SNMP.
+			Entretanto, existem situações em que o tipo SNMP pode ser melhor especificado.
+			Por exemplo, ao declarar o tipo <literal>int</literal> no retorno do método a seguir,
+			este será convertido para o tipo <literal>integer</literal> em SNMP:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@OID(".2")
+public int getContador() {
+	return 1500;
+}]]></programlisting>
+		<programlisting role="BASH"><![CDATA[$ snmpget -v 1 -c public localhost:1161 enterprises.35437.1.2.2.0
+SNMPv2-SMI::enterprises.35437.1.2.2.0 = INTEGER: 1500]]></programlisting>
+		<para>
+			Os tipos de dados SNMP v1 e v2 estão disponíveis na forma de anotações Java.
+			Para exportar o objeto do exemplo acima sob o tipo específico <emphasis>counter</emphasis>,
+			implemente o método usando a anotação <literal>@Counter32</literal>:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@OID(".2")
+@Counter32
+public int getContador() {
+	return 1500;
+}]]></programlisting>
+		<para>
+			Ao consultar esse objeto usando <command>snmpget</command>, perceba que agora
+			o tipo de dados <emphasis>counter</emphasis> está sendo devidamente especificado
+			pelo agente ao cliente:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ snmpget -v 1 -c public localhost:1161 enterprises.35437.1.2.2.0
+SNMPv2-SMI::enterprises.35437.1.2.2.0 = Counter32: 1500]]></programlisting>
+		<para>
+			Veja na tabela a seguir cada um dos tipos de dados SNMP e as anotações correspondentes.
+		</para>
+		<table id="snmp-tipos-dados">
+			<title id="snmp-tipos-dados.title">Tipos de dados SNMP</title>
+			<tgroup cols="3">
+				<colspec colwidth="15*"/>
+				<colspec colwidth="25*"/>
+				<colspec colwidth="60*"/>
+				<thead>
+					<row>
+						<entry><emphasis role="bold">Tipo de dado</emphasis></entry>
+						<entry><emphasis role="bold">Anotação</emphasis></entry>
+						<entry><emphasis role="bold">Descrição</emphasis></entry>
+					</row>
+				</thead>
+				<tbody>
+					<row>
+						<entry>Counter</entry>
+						<entry><literal>@Counter32</literal></entry>
+						<entry>
+							<para>
+								Um contador é um número inteiro não-negativo incrementado até
+								que um valor máximo seja alcançado, voltando assim ao zero. A SMIv1
+								(<ulink url="http://tools.ietf.org/html/rfc1155">RFC-1155</ulink>)
+								especifica o tamanho de 32 bits para o tipo <emphasis>counter</emphasis>.
+							</para>
+						</entry>
+					</row>
+					<row>
+						<entry>Counter64</entry>
+						<entry><literal>@Counter64</literal></entry>
+						<entry>
+							<para>
+								Trata-se de um <emphasis>counter</emphasis> definido na SMIv2
+								(<ulink url="http://tools.ietf.org/html/rfc2578">RFC-2578</ulink>)
+								capaz de armazenar valores com 64 bits. 
+							</para>
+						</entry>
+					</row>
+					<row>
+						<entry>Gauge</entry>
+						<entry><literal>@Gauge32</literal></entry>
+						<entry>
+							<para>
+								O <emphasis>gauge</emphasis> representa um inteiro não-negativo,
+								que pode oscilar entre zero e um valor máximo. Este valor máximo
+								é 2<superscript>32</superscript>−1 (i.e., o decimal 4.294.967.295).
+							</para>
+						</entry>
+					</row>
+					<row>
+						<entry>Integer</entry>
+						<entry><literal>@Integer32</literal></entry>
+						<entry>
+							<para>
+								O tipo de dados <emphasis>integer</emphasis> é um número inteiro
+								negativo ou positivo na faixa de −2<superscript>31</superscript> a
+								2<superscript>31</superscript>−1.
+							</para>
+						</entry>
+					</row>
+					<row>
+						<entry>IP Address</entry>
+						<entry><literal>@IPAddress</literal></entry>
+						<entry>
+							<para>
+								Representa um endereço de Internet de 32 bits através de uma string
+								de 4 octetos, ou seja, um endereço IPv4. O valor é codificado como
+								4 bytes na ordem de rede de computadores.
+							</para>
+						</entry>
+					</row>
+					<row>
+						<entry>Object Identifier (OID)</entry>
+						<entry><literal>@ObjectIdentifier</literal></entry>
+						<entry>
+							<para>
+								Os <emphasis>Object IDs</emphasis> são provenientes do conjunto de
+								todos os identificadores de objeto alocados de acordo com as regras
+								definidas na especificação ASN.1
+								(<ulink url="http://www.itu.int/ITU-T/asn1/introduction/index.htm"/>).
+								Uma instância desse tipo pode ter até 128 sub-identificadores. Além
+								disso, cada sub-identificador não deve exceder o valor
+								2<superscript>32</superscript>−1.
+							</para>
+						</entry>
+					</row>
+					<row>
+						<entry>Octet String</entry>
+						<entry><literal>@OctetString</literal></entry>
+						<entry>
+							<para>
+								Representa dados arbitrários binários ou textuais, ou seja,
+								sequências ordenadas de 0 a 65.535 octetos.
+							</para>
+						</entry>
+					</row>
+					<row>
+						<entry>Time Ticks</entry>
+						<entry><literal>@TimeTicks</literal></entry>
+						<entry>
+							<para>
+								Representa um número não-negativo que especifica o tempo passado
+								entre dois eventos, em unidades de centésimos de segundo. Compreende
+								a faixa de valores de 0 a 2<superscript>32</superscript>−1. 
+							</para>
+						</entry>
+					</row>
+				</tbody>
+			</tgroup>
+		</table>
+		<note>
+			<para>
+				O tipo de dados <literal>String</literal> do Java é implicitamente convertido para
+				<literal>@OctetString</literal>. Já os tipos de dados numéricos, sejam eles primitivos
+				(ex: <literal>int</literal>, <literal>short</literal>, <literal>long</literal>) ou de
+				referência (ex: <literal>Integer</literal>, <literal>Short</literal>,
+				<literal>Long</literal>), são convertidos para <literal>Integer32</literal>.
+			</para>
+		</note>
+		<tip>
+			As anotações de tipos de dados SNMP fornecidas pelo componente estão no pacote
+			<literal>br.gov.frameworkdemoiselle.monitoring.annotation.snmp.type</literal>.
+		</tip>
+	</section>
+	
+	<section>
+		<title>Exportando um objeto para leitura e escrita via SNMP</title>
+		<para>
+			Os exemplos de objetos de árvores de serviços que vimos até o momento eram somente de
+			leitura. É possível também com o componente <emphasis>Demoiselle Monitoring</emphasis>
+			disponibilizar objetos que possam ser lidos ou modificados por um cliente SNMP.
+		</para>
+		<para>
+			A maneira mais fácil de implementar isso é criando um campo na classe do MBean,
+			ou seja, uma variável que possua métodos do tipo <emphasis>getter</emphasis> e
+			<emphasis>setter</emphasis>. A anotação <literal>@OID</literal> para o SNMP deve ser
+			declarada na variável, e não nos métodos. Além disso, é preciso indicar que o campo
+			será modificável através da anotação <literal>@ReadWrite</literal>. Veja um exemplo:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@OID(".3")
+@ReadWrite
+private long campo;
+
+public long getCampo() {
+	return campo;
+}
+
+public void setCampo(long campo) {
+	this.campo = campo;
+}]]></programlisting>
+		<para>
+			Feito isso, o valor exportado pela árvore MIB agora pode ser consultado e alterado por
+			um cliente SNMP. Veja como fica o uso do comando <command>snmpget</command>:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ snmpget -v 1 -c public localhost:1161 enterprises.35437.1.2.3.0
+SNMPv2-SMI::enterprises.35437.1.2.3.0 = INTEGER: 0]]></programlisting>
+		<para>
+			Este valor de objeto pode ser alterado usando o comando <command>snmpset</command>
+			<footnote>
+				<para>
+					Para maiores informações sobre o <command>snmpset</command>, acesse:
+					<ulink url="http://www.net-snmp.org/docs/man/snmpset.html"/>
+				</para>
+			</footnote>, tal como exemplificado:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ snmpset -v 1 -c public localhost:1161 enterprises.35437.1.2.3.0 i 256
+SNMPv2-SMI::enterprises.35437.1.2.3.0 = INTEGER: 256]]></programlisting>
+		<para>
+			É possível ainda restringir os valores aceitados para um campo numérico. Para isso,
+			basta usar a anotação <literal>@AllowedValues</literal> na sua delaração. No exemplo a
+			seguir, apenas os valores 1, 2 ou 3 poderão ser atribuídos ao campo:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@OID(".3")
+@ReadWrite
+@AllowedValues({1, 2, 3})
+private long campo;]]></programlisting>
+	</section>
+	
+	<section>
+		<title>Uma árvore MIB mais complexa</title>
+		<para>
+			Veremos agora um caso prático, onde uma aplicação de gestão escolar precisa fornecer
+			monitoração sobre indicadores de negócio e de sistema. A proposta é criar uma árvore de
+			serviços (i.e., uma MIB tree) que exponha esses valores na forma de objetos SNMP.
+			O endereço <quote><literal>1.3.6.1.4.1.35437.1.75048.2011.1</literal></quote> será a
+			raiz dessa árvore específica (sob o ramo <literal>enterprises.serpro.apps</literal>).
+		</para>
+		<para>
+			O primeiro passo é criar a interface contendo todos os métodos referentes aos objetos a
+			serem exportados. Lembre-se de usar o sufixo <quote><literal>MBean</literal></quote>:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public interface EscolaMonitoringMBean {
+
+	String getVersaoAplicacao();
+
+	int getQtdTurmasIncluidas();
+
+	long getQtdAlunosMatriculados();
+
+	String getUltimoUsuarioLogado();
+
+	int getNivelLog();
+
+	void setNivelLog(int nivelLog);
+
+}]]></programlisting>
+		<para>
+			Em seguida, crie a classe que implementa a interface anterior. É necessário que ela
+			seja anotada com <literal>@MBean</literal> e <literal>@MIB</literal>. Veja:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@MBean
+@Name("br.gov.frameworkdemoiselle:name=Escola")
+@MIB(".75048.2011.1")
+public class EscolaMonitoring implements EscolaMonitoringMBean {
+
+	private static final String VERSAO = "2.4.1-BETA";
+	private static final String[] USUARIOS = { "Fulano", "Sicrano", "Beltrano" };
+
+	private int qtdTurmas = 0;
+	private long qtdAlunos = 0;
+
+	@OID(".1")
+	@Override
+	public String getVersaoAplicacao() {
+		return VERSAO;
+	}
+
+	@OID(".2")
+	@Counter32
+	@Override
+	public int getQtdTurmasIncluidas() {
+		this.qtdTurmas += (int) (Math.random() * 10);
+		return this.qtdTurmas;
+	}
+
+	@OID(".3")
+	@Gauge32
+	@Override
+	public long getQtdAlunosMatriculados() {
+		this.qtdAlunos = (int) (Math.random() * 100) + 100;
+		return this.qtdAlunos;
+	}
+
+	@OID(".4")
+	@Override
+	public String getUltimoUsuarioLogado() {
+		int pos = (int) (Math.random() * USUARIOS.length);
+		return USUARIOS[pos];
+	}
+
+	@OID(".5")
+	@ReadWrite
+	@AllowedValues({1, 2, 3, 4})
+	private int nivelLog = 1;
+
+	@Override
+	public int getNivelLog() {
+		return this.nivelLog;
+	}
+
+	@Override
+	public void setNivelLog(int nivelLog) {
+		this.nivelLog = nivelLog;
+	}
+
+}]]></programlisting>
+		<para>
+			Neste caso de exemplo, a árvore montada a partir de <literal>EscolaMonitoring</literal>
+			disponibilizará cinco objetos via SNMP. O objeto <function>VersaoAplicacao</function>
+			retornará sempre o mesmo valor de <emphasis>string</emphasis>. Já
+			<function>QtdTurmasIncluidas</function> e <function>QtdAlunosMatriculados</function>
+			retornarão números inteiros (respectivamente do tipo <emphasis>counter</emphasis> e
+			<emphasis>gauge</emphasis>) que serão incrementados aleatoriamente a cada chamada.
+			O objeto <function>UltimoUsuarioLogado</function> retorna randomicamente um dos três
+			nomes possíveis de usuário. E <function>NivelLog</function> armazena um número que pode
+			ser consultado ou modificado (com restrições de valores).
+		</para>
+		<para>
+			Note que chamadas consecutivas ao serviço SNMP com o comando <command>snmpwalk</command>
+			<footnote>
+				<para>
+					Para maiores informações sobre o <command>snmpset</command>, acesse:
+					<ulink url="http://www.net-snmp.org/docs/man/snmpwalk.html"/>
+				</para>
+			</footnote>
+			retornarão valores distintos para alguns dos objetos, tal como esperado:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ snmpwalk -v 1 -c public localhost:1161 enterprises.35437.1.75048
+SNMPv2-SMI::enterprises.35437.1.75048.2011.1.1.0 = STRING: "2.4.1-BETA"
+SNMPv2-SMI::enterprises.35437.1.75048.2011.1.2.0 = Counter32: 115
+SNMPv2-SMI::enterprises.35437.1.75048.2011.1.3.0 = Gauge32: 129
+SNMPv2-SMI::enterprises.35437.1.75048.2011.1.4.0 = STRING: "Fulano"
+SNMPv2-SMI::enterprises.35437.1.75048.2011.1.5.0 = INTEGER: 1
+End of MIB]]></programlisting>
+		<programlisting role="BASH"><![CDATA[$ snmpwalk -v 1 -c public localhost:1161 enterprises.35437.1.75048
+SNMPv2-SMI::enterprises.35437.1.75048.2011.1.1.0 = STRING: "2.4.1-BETA"
+SNMPv2-SMI::enterprises.35437.1.75048.2011.1.2.0 = Counter32: 121
+SNMPv2-SMI::enterprises.35437.1.75048.2011.1.3.0 = Gauge32: 166
+SNMPv2-SMI::enterprises.35437.1.75048.2011.1.4.0 = STRING: "Beltrano"
+SNMPv2-SMI::enterprises.35437.1.75048.2011.1.5.0 = INTEGER: 1
+End of MIB]]></programlisting>
+		<programlisting role="BASH"><![CDATA[$ snmpwalk -v 1 -c public localhost:1161 enterprises.35437.1.75048
+SNMPv2-SMI::enterprises.35437.1.75048.2011.1.1.0 = STRING: "2.4.1-BETA"
+SNMPv2-SMI::enterprises.35437.1.75048.2011.1.2.0 = Counter32: 128
+SNMPv2-SMI::enterprises.35437.1.75048.2011.1.3.0 = Gauge32: 189
+SNMPv2-SMI::enterprises.35437.1.75048.2011.1.4.0 = STRING: "Beltrano"
+SNMPv2-SMI::enterprises.35437.1.75048.2011.1.5.0 = INTEGER: 1
+End of MIB]]></programlisting>
+		<para>
+			Veja na figura a seguir as árvores de serviço SNMP sendo consultadas através de
+			<command>SNMP walk</command> com a ferramenta gráfica
+			<ulink url="http://ireasoning.com/mibbrowser.shtml">iReasoning MIB Browser</ulink>.
+		</para>
+		<figure>
+			<title>Consultando as árvores de serviços SNMP.</title>
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="monitoring/images/mib-browser.png" align="center" scalefit="1" width="100%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="monitoring/images/mib-browser.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</figure>
+	</section>
+	
+	<section>
+		<title>Definição de segurança (SNMPv3)</title>
+		<para>
+			Nos exemplos que vimos até agora, só fizemos uso da versão 1 do protocolo SNMP.
+			Todavia, existem situações em que as outras versões existentes, 2c e 3, sejam
+			consideradas. A versão 2 implementa basicamente tipos de dados adicionais à versão 1,
+			particularmente os de 64 bits (ex: <emphasis>counter64</emphasis>). Já a versão 3 traz
+			como principal feature o controle de acesso, isto é, parâmetros mínimos de segurança.
+			Este é justamente o tema desta seção.
+		</para>
+		<para>
+			Para com que a versão 3 do protocolo SNMP seja utilizada, é preciso configurar
+			devidamente os seguintes mecanismos existentes no agente:
+			<itemizedlist>
+				<listitem>Secret-Key Authentication</listitem>
+				<listitem>Privacy Using Conventional Encryption</listitem>
+				<listitem>User-Based Security Model (USM)</listitem>
+				<listitem>View-Based Access Control Model (VACM)</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			No componente <emphasis>Demoiselle Monitoring</emphasis> essa parametrização é feita em
+			um único arquivo, o <filename>snmp-security.xml</filename>, contendo a estrutura
+			indicada no exemplo a seguir:
+		</para>
+		<programlisting role="XML"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<snmp-security>
+	<security>
+		<user name="escola">
+			<auth protocol="SHA" pass="senha123" />
+			<priv protocol="AES" pass="senha456" />
+		</user>
+		<user name="zabbix">
+			<auth protocol="MD5" pass="senha321" />
+			<priv protocol="DES" pass="senha654" />
+		</user>
+	</security>
+	<access-control>
+		<views>
+			<view name="escolaReadView">
+				<include subtree="1.3.6.1.4.1.35437.1.75048" />
+			</view>
+			<view name="escolaWriteView">
+				<include subtree="1.3.6.1.4.1.35437.1.75048" />
+			</view>
+			<view name="escolaNotifyView">
+				<include subtree="1.3.6.1.4.1.35437.1.75048" />
+			</view>
+		</views>
+		<groups>
+			<group name="v3escola">
+				<security name="escola" model="USM" />
+				<security name="zabbix" model="USM" />
+				<access model="USM" auth="true" priv="true" exact="true">
+					<read view="escolaReadView" />
+					<write view="escolaWriteView" />
+					<notify view="escolaNotifyView" />
+				</access>
+			</group>
+		</groups>
+	</access-control>
+</snmp-security>]]></programlisting>
+		<para>
+			Ou seja, os seguintes itens precisam ser detalhados neste arquivo:
+			<itemizedlist>
+				<listitem>
+					<para>
+						nomes de <emphasis>usuários</emphasis> para a autenticação
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						senha para <emphasis>autenticação</emphasis> do usuário, usando um dos
+						seguintes protocolos de criptografia: SHA ou MD5
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						senha para <emphasis>privacidade</emphasis> do usuário, usando um dos
+						seguintes protocolos de criptografia: DES, 3DES ou AES (128, 192 e 256 bits)
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>visões</emphasis> destinadas a leitura, escrita e notificação nas
+						árvores de serviço (MIBs)
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>grupos</emphasis> de acesso para vincular usuários, modelos de
+						segurança, restrições de autenticação e privacidade às visões
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+		<important>
+			<para>
+				A configuração anterior sugerida para o arquivo <filename>snmp-security.xml</filename>
+				considerava apenas as versões 1 e 2c do protocolo SNMP. Ou seja, para a segurança
+				bastava indicar o nome da comunidade (i.e., <literal>public</literal>). 
+			</para>
+		</important>
+		<para>
+			Considerando a nova configuração de segurança sugerida, ao utilizar os comandos das
+			ferramentas clientes com o protocolo SNMPv3, é preciso passar argumentos adicionais,
+			tais como o nome do usuário, a forma escolhida para autenticação e privacidade e as
+			respectivas senhas e algoritmos de criptografia.
+		</para>
+		<para>
+			A instrução <command>snmpget</command> fica assim para o usuário <literal>escola</literal>
+			usando SHA na autenticação e AES na privacidade:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ snmpget -v 3 -l authPriv -u escola -a SHA -A senha123 -x AES -X senha456 \
+     localhost:1161 enterprises.35437.1.75048.2011.1.3.0
+SNMPv2-SMI::enterprises.35437.1.75048.2011.1.3.0 = Gauge32: 134]]></programlisting>
+		<para>
+			Nos aplicativos clientes será preciso informar esses parâmetros de segurança do SNMPv3.
+			Veja como isso é apresentado no <emphasis>iReasoning MIB Browser</emphasis>:
+		</para>
+		<figure>
+			<title>Configuração de segurança SNMPv3.</title>
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="monitoring/images/mib-browser-sec.png" align="center" scalefit="1" width="70%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="monitoring/images/mib-browser-sec.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</figure>
+		<para>
+			Para testar o controle de acesso (VACM) do SNMPv3, ao requisitar um objeto pertencente a
+			uma visão não permitida ao grupo do usuário, o resultado é exibido abaixo:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ snmpget -v 3 -l authPriv -u escola -a SHA -A senha123 -x AES -X senha456 \
+       localhost:1161 enterprises.35437.1.2.2.0
+SNMPv2-SMI::enterprises.35437.1.2.2.0 = No Such Object available on this agent at this OID]]></programlisting>
+		<para>
+			Além disso, ao executar o comando <command>snmpwalk</command>, apenas os ramos da
+			árvore disponíveis para o grupo do usuário são exibidos:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ snmpwalk -O n -v 3 -l authPriv -u escola -a SHA -A senha123 -x AES -X senha456 localhost:1161 .
+.1.3.6.1.4.1.35437.1.75048.2011.1.1.0 = STRING: "2.4.1-BETA"
+.1.3.6.1.4.1.35437.1.75048.2011.1.2.0 = Counter32: 19
+.1.3.6.1.4.1.35437.1.75048.2011.1.3.0 = Gauge32: 184
+.1.3.6.1.4.1.35437.1.75048.2011.1.4.0 = STRING: "Sicrano"
+.1.3.6.1.4.1.35437.1.75048.2011.1.5.0 = INTEGER: 1
+.1.3.6.1.4.1.35437.1.75048.2011.1.5.0 = No more variables left in this MIB View (It is past the end of the MIB tree)]]></programlisting>
+		<para>
+			De maneira semelhante, ao utilizar o usuário <literal>zabbix</literal> com os protocolos
+			MD5 para autenticação e DES para privacidade, além das respectivas senhas, a instrução
+			para o <command>snmpget</command> é a seguinte:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ snmpget -v 3 -l authPriv -u zabbix -a MD5 -A senha321 -x DES -X senha654 \
+       localhost:1161 enterprises.35437.1.75048.2011.1.3.0
+SNMPv2-SMI::enterprises.35437.1.75048.2011.1.3.0 = Gauge32: 138]]></programlisting>
+		<para>
+			Caso a senha de autenticação estiver incorreta, o resultado é o seguinte:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ snmpget -v 3 -l authPriv -u zabbix -a MD5 -A senha_errada -x DES -X senha654 \
+       localhost:1161 enterprises.35437.1.75048.2011.1.3.0
+snmpget: Authentication failure (incorrect password, community or key)]]></programlisting>
+		<para>
+			Entretanto, se a senha de privacidade for inválida, ocorre um timeout na requisição:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ snmpget -v 3 -l authPriv -u zabbix -a MD5 -A senha321 -x DES -X senha_errada \
+       localhost:1161 enterprises.35437.1.75048.2011.1.3.0
+Timeout: No Response from localhost:1161.]]></programlisting>
+		<para>
+			E por fim, caso as formas de autenticação e privacidade especificadas no cliente forem
+			diferentes das configuradas no agente, a resposta é a seguinte:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ snmpget -v 3 -l authNoPriv -u zabbix -a MD5 -A senha321 \
+       localhost:1161 enterprises.35437.1.75048.2011.1.3.0
+Error in packet
+Reason: authorizationError (access denied to that object)
+Failed object: SNMPv2-SMI::enterprises.35437.1.75048.2011.1.3.0]]></programlisting>
+	</section>
+	
+</chapter>

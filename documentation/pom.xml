@@ -44,11 +44,11 @@
 	<version>2.2.2-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
-	<name>Demoiselle JUnit Documentation Build Aggregator</name>
+	<name>Documentation Build Aggregator</name>
 	<description />
 
 	<modules>
-<!-- 		<module>reference</module> -->
+		<module>reference</module>
 	</modules>
 
 	<build>

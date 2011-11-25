@@ -1,0 +1,125 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="monitoring-varios">
+
+	<title>Monitorando com múltiplas abordagens</title>
+	<para>
+		Nos capítulos anteriores foram apresentadas três abordagens diferentes para a
+		monitoração de aplicações Java com o auxílio do componente
+		<emphasis>Demoiselle Monitoring</emphasis>: JMX, SNMP e Zabbix. Nas seções seguintes
+		veremos que, embora geralmente iremos escolher apenas uma delas, temos a possibilidade de
+		utilizá-las em conjunto na mesma aplicação.
+	</para>
+	
+	<section>
+		<title>Um trapper multiuso: SNMP e Zabbix</title>
+		<para>
+			Ao construir uma classe trapper, o programador pode fazer uso de ambas as abordagens
+			SNMP e Zabbix com o mesmo código. Esta será efetivamente escolhida no momento da injeção.
+			Considere como exemplo a interface <literal>SystemTrapper</literal>: 
+		</para>
+		<programlisting role="JAVA"><![CDATA[public interface SystemTrapper {
+
+	void sendAvailability(String version, long uptime);
+
+}]]></programlisting>
+		<para>
+			A classe do tipo trapper <literal>SystemTrapperSNMPZabbix</literal> abaixo a estará
+			preparada para ser usada tanto com SNMP ou Zabbix:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@Trapper
+@SNMP
+@MIB(".3.3")
+@Zabbix
+@HostName("scel5was")
+public class SystemTrapperSNMPZabbix implements SystemTrapper {
+
+	@OID(".1")
+	@SpecificTrap(5)
+	@ItemKey("app[*].uptime")
+	public void sendAvailability(final String version, final @Counter32 long uptime) { }
+
+}]]></programlisting>
+		<note>
+			<para>
+				As anotações <literal>@SNMP</literal>, <literal>@MIB</literal>, <literal>@OID</literal>,
+				<literal>@SpecificTrap</literal> e <literal>@Counter32</literal> neste exemplo referem-se
+				à abordagem SNMP. Já as anotações <literal>@Zabbix</literal>, <literal>@HostName</literal>
+				e <literal>@ItemKey</literal> são próprias da abordagem Zabbix. Todavia, elas agem
+				de modo independente e por isso podem ser usadas em declarações na mesma classe.
+			</para>
+		</note>
+		<para>
+			Eis um exemplo de emprego da classe <literal>SystemTrapperSNMPZabbix</literal> para
+			enviar traps a um servidor SNMP:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class SystemTrapperSNMPTest {
+
+	@Inject
+	@SNMP
+	private SystemTrapper snmp;
+
+	public void sendTrap() {
+		snmp.sendAvailability("2.1.3", 14400);
+	}
+
+}]]></programlisting>
+		<para>
+			Para usar a mesma classe <literal>SystemTrapperSNMPZabbix</literal> para enviar traps a
+			um servidor Zabbix, eis um exemplo:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class SystemTrapperZabbixTest {
+
+	@Inject
+	@Zabbix
+	private SystemTrapper zabbix;
+
+	public void sendTrap() {
+		zabbix.sendAvailability("2.1.3", 14400);
+	}
+
+}]]></programlisting>
+		<para>
+			Existe ainda a possibilidade de a aplicação disparar traps para ambos os servidores
+			SNMP e Zabbix com uma mesma classe trapper:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public class SystemTrapperMultiTest {
+
+	@Inject
+	@SNMP
+	@Zabbix
+	private SystemTrapper trapper;
+
+	public void sendTrap() {
+		trapper.sendAvailability("2.1.3", 14400);
+	}
+	
+}]]></programlisting>
+		<important>
+			<para>
+				A escolha sobre qual abordagem utilizar é feita no momento da injeção da classe
+				trapper, ou seja, se foi utilizado <literal>@SNMP</literal> e ou <literal>@Zabbix</literal>
+				em conjunto com <literal>@Inject</literal>.
+			</para>
+		</important>
+		<para>
+			Eis a mensagem enviada ao servidor SNMP com o código acima:
+		</para>
+		<programlisting><![CDATA[2011-08-25 15:49:46 0.0.0.0(via UDP: [127.0.0.1]:36822) TRAP, SNMP v1, community public
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.3.3.1 Enterprise Specific Trap (5)
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.3.3.1.1.0 = STRING: "2.1.3"
+    SNMPv2-SMI::enterprises.35437.1.1.2425.2011.3.3.1.2.0 = Counter32: 14400]]></programlisting>
+		<para>
+			E a mensagem enviada ao servidor Zabbix na mesma invocação:
+		</para>
+		<programlisting><![CDATA[INFO [zabbix.Sender] Sending message: [host=scel5was, key=app[2.1.3].uptime, value=14400]
+INFO [zabbix.Sender] Actual stream sent:
+    <req>
+        <host>c2NlbDV3YXM=</host>
+        <key>YXBwWzIuMS4zXS51cHRpbWU=</key>
+        <data>MTQ0MDA=</data>
+    </req>]]></programlisting>
+	</section>
+	
+</chapter>

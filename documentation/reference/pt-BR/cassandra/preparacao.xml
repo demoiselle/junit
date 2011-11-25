@@ -1,0 +1,95 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE appendix PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<appendix id="preparacao">
+
+	<title>Preparação do Apache Cassandra</title>
+
+	<section>
+		<title>Instalação</title>
+		<para>
+			Para instalar o servidor <emphasis>Apache Cassandra</emphasis>, é recomendável que seja
+			utilizado pacote específico para o seu sistema operacional. Por exemplo, no Debian GNU/Linux
+			existe o pacote <literal>cassandra</literal> (veja mais instruções em
+			<ulink url="http://wiki.apache.org/cassandra/DebianPackaging"/>).
+		</para>
+		<para>
+			Entretanto, para qualquer plataforma é possível baixar os binários diretamente através
+			do endereço a seguir: <ulink url="http://cassandra.apache.org/download/"/>.
+		</para>
+		<para>
+			Extraia o arquivo comprimido para um local de sua escolha (ex: <filename>/opt/cassandra</filename>).
+			Por exemplo, se usada a extensão TGZ:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ tar xzf apache-cassandra-*.tar.gz]]></programlisting>
+		<note>
+			<para>
+				De agora em diante neste documento, considere a variável <literal>CASSANDRA_HOME</literal>
+				como sendo o local onde você extraiu os binários do <emphasis>Apache Cassandra</emphasis>.
+				Ex: <filename>/home/usuario/apache-cassandra-0.6.13/</filename>. 
+			</para>
+		</note>
+	</section>
+
+	<section>
+		<title>Configuração</title>
+		<para>
+			No diretório do Cassandra, abra o arquivo <filename>conf/log4j.properties</filename> e
+			modifique o trecho indicado, salvando em seguida:
+		</para>
+		<programlisting><![CDATA[log4j.appender.R.File=./log/system.log]]></programlisting>
+		<para>
+			Ainda no mesmo diretório, abra o arquivo <filename>conf/storage-conf.xml</filename> e
+			altere as entradas seguintes:
+		</para>
+		<programlisting role="XML"><![CDATA[<SavedCachesDirectory>./caches</SavedCachesDirectory>
+<CommitLogDirectory>./txs</CommitLogDirectory>
+<DataFileDirectories>
+    <DataFileDirectory>./data</DataFileDirectory>
+</DataFileDirectories>]]></programlisting>
+	</section>
+	
+	<section>
+		<title>Inicialização</title>
+		<para>
+			Abra um novo terminal, mude para o diretório do Cassandra,
+			(i.e., <literal>CASSANDRA_HOME</literal>), e execute o comando a seguir para que o
+			respectivo serviço seja iniciado:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ ./bin/cassandra -f]]></programlisting>
+		<para>
+			Se no final da tela aparecer a mensagem <quote><literal>Cassandra starting up...</literal></quote>,
+			parabéns, o servidor Apache Cassandra está pronto para ser usado!
+		</para>
+	</section>
+
+	<section>
+		<title>Verificação</title>
+		<para>
+			Se o servidor <emphasis>Apache Cassandra</emphasis> tiver sido configurado
+			adequadamente, devem ser abertas três portas TCP no sistema operacional: 8080, 7000 e 9160.
+			Execute o comando a seguir para verificar a situação do servidor:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ netstat -lptn]]></programlisting>
+		<para>
+			Devem aparecer as linhas indicadas abaixo:
+		</para>
+		<programlisting><![CDATA[Conexões Internet Ativas (sem os servidores)
+Proto Recv-Q Send-Q Endereço Local          Endereço Remoto         Estado       PID/Program name
+tcp6       0      0 :::8080                 :::*                    OUÇA       7482/java       
+tcp6       0      0 127.0.0.1:7000          :::*                    OUÇA       7482/java       
+tcp6       0      0 127.0.0.1:9160          :::*                    OUÇA       7482/java]]></programlisting>       
+		<para>
+			Para verificar o arranjo do servidor Cassandra, execute a instrução a seguir a partir
+			do diretório <literal>CASSANDRA_HOME</literal>:
+		</para>
+		<programlisting role="BASH"><![CDATA[$ ./bin/nodetool -h localhost -p 8080 ring]]></programlisting>
+		<note>
+			<para>
+				O comando anterior é extremamente útil para descrever como está a distribuição dos
+				dados nos diversos servidores quando arranjados em um cluster.
+			</para>
+		</note>
+	</section>
+	
+</appendix>

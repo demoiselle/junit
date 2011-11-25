@@ -1,0 +1,193 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" []>
+<chapter id="monitoring-jmx">
+
+	<title id="monitoring-jmx.title">Monitorando via JMX</title>
+	<para>
+		A <emphasis>Java Management Extensions (JMX)</emphasis> é uma API padrão para gerenciamento
+		e monitoração de recursos tais como aplicações, dispositivos, serviços e a máquina virtual
+		Java (JVM). A tecnologia JMX foi desenvolvida através de um processo <emphasis>Java Community
+		Process (JCP)</emphasis> que envolveu a <emphasis>JSR-003 (Java Management Extensions)</emphasis>
+		e a <emphasis>JSR-160 (JMX Remote API)</emphasis>.
+	</para>
+	<para>
+		A <emphasis>tecnologia JMX</emphasis> é utilizada geralmente nesses casos:
+		<itemizedlist>
+			<listitem>
+				consulta e mudança de parâmetros de configuração em uma aplicação
+			</listitem>
+			<listitem>
+				acúmulo de dados estatísticos sobre o comportamento de uma aplicação e
+				disponibilização destes
+			</listitem>
+			<listitem>
+				notificação de mudanças de estado e condições de erro
+			</listitem>
+		</itemizedlist>
+	</para>
+	<para>
+		A API JMX inclui acesso remoto, o que permite que um programa de gerenciamento remoto possa
+		interagir com uma aplicação em execução para esses propósitos.
+	</para>
+	<tip>
+		<para>
+			Para saber mais sobre a <emphasis>Tecnologia JMX</emphasis> e a
+			<emphasis>API JMX</emphasis>, acesse o link:
+			<ulink url="http://download.oracle.com/javase/6/docs/technotes/guides/jmx/" />. 
+		</para>
+	</tip>
+	<para>
+		Nas seções a seguir veremos como usar os recursos da <emphasis>API JMX</emphasis> de uma
+		forma bem prática e simples através do componente <emphasis>Demoiselle Monitoring</emphasis>.
+	</para>
+	
+	<section>
+		<title>Criando e exportando um MBean</title>
+		<para>
+			Os recursos disponíveis na <emphasis>JMX</emphasis> são representados por objetos
+			chamados <emphasis>MBeans (Managed Beans)</emphasis>. MBeans são classes Java
+			dinamicamente carregadas e instanciadas e que podem ser usadas para se obter e ou
+			alterar configurações das aplicações, coleta de estatísticas e notificação de eventos.
+		</para>
+		<para>
+			O primeiro passo para a criação de um MBean consiste na criação de uma interface com o
+			sufixo <quote>MBean</quote> que expõe os métodos referentes aos atributos a serem
+			exportados. Eis um exemplo:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public interface ExemploMBean {
+
+	String getAtributo();
+
+}]]></programlisting>
+		<para>
+			Em seguida, é preciso criar uma classe que implemente a referida interface,
+			preenchendo com códigos os métodos. Além disso, a classe deve ser estereotipada com
+			a anotação <literal>@MBean</literal>. Veja:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@MBean
+public class Exemplo implements ExemploMBean {
+
+	public String getAtributo() {
+		return "abc";
+	}
+
+}]]></programlisting>
+		<important>
+			<para>
+				Para ser um <emphasis>Standard MBean</emphasis> compatível com a API JMX,
+				é necessário que a classe em questão implemente uma interface de mesmo nome
+				acrescida do sufixo <quote><literal>MBean</literal></quote>.
+			</para>
+		</important>
+		<tip>
+			<para>
+				A anotação <literal>@MBean</literal> e fornecida pelo
+				<emphasis>Demoiselle Monitoring</emphasis> e encontra-se no pacote
+				<literal>br.gov.frameworkdemoiselle.monitoring.stereotype</literal>.
+			</para>
+		</tip>
+		<para>
+			Uma vez em execução a aplicação, você pode usar o programa <command>jconsole</command>
+			<footnote>
+				<para>
+					<command>jconsole</command> é uma ferramenta gráfica compatível com JMX para
+					monitorar máquinas virtuais Java locais ou remotas. Para maiores informações,
+					acesse o link <ulink url="http://java.sun.com/developer/technicalArticles/J2SE/jconsole.html"/>.
+				</para>
+			</footnote>
+			para verificar se o MBean foi devidamente registrado e exportado no servidor JMX. Veja o resultado:
+		</para>
+		<figure>
+			<title>Consultando MBeans exportados no servidor JMX.</title>
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="monitoring/images/jmx-jconsole1b.png" align="center" scalefit="1" width="90%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="monitoring/images/jmx-jconsole1b.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</figure>
+	</section>
+	
+	<section>
+		<title>Especificando um nome para o MBean</title>
+		<para>
+			Cada MBean exportado pelo servidor JMX possui um nome único no qual é registrado. Ao
+			usar a anotação <literal>@MBean</literal>, o seguinte padrão é adotado:
+			<quote><literal>nome.do.pacote:name=NomeDaClasse</literal></quote>.
+		</para>
+		<para>
+			No exemplo anterior, o MBean foi registrado com o nome
+			<quote><literal>br.gov.frameworkdemoiselle.monitoring.mbean:name=Exemplo</literal></quote>,
+			pois a classe de nome <literal>Exemplo</literal> pertencia ao pacote
+			<literal>br.gov.frameworkdemoiselle.monitoring.mbean</literal>.
+		</para>
+		<para>
+			É possível sobrescrever esse padrão ao utilizar a anotação <literal>@Name</literal> em
+			conjunto com <literal>@MBean</literal> na declaração da classe, tal como ilustrado abaixo:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@MBean
+@Name("br.gov.frameworkdemoiselle:name=OutroNome")]]></programlisting>
+		<tip>
+			<para>
+				A anotação <literal>@Name</literal> está no pacote
+				<literal>br.gov.frameworkdemoiselle.annotation</literal>.
+			</para>
+		</tip>
+		<para>
+			Dessa forma, o objeto MBean será registrado com o nome escolhido no servidor JMX. Veja:
+		</para>
+		<figure>
+			<title>Consultando MBean registrado com nome customizado.</title>
+			<mediaobject>
+				<imageobject role="fo">
+					<imagedata fileref="monitoring/images/jmx-jconsole2b.png" align="center" scalefit="1" width="90%"/>
+				</imageobject>
+				<imageobject role="html">
+					<imagedata fileref="monitoring/images/jmx-jconsole2b.png" align="center"/>
+				</imageobject>
+			</mediaobject>
+		</figure>
+	</section>
+
+	<section>
+		<title>Atributos de leitura e escrita</title>
+		<para>
+			O MBean criado como exemplo possuía apenas um atributo, de nome <literal>Atributo</literal>,
+			o qual era somente de leitura (<emphasis>read only</emphasis>). Para que o valor de um
+			atributo de MBean possa ser alterado, e não apenas consultado, basta implementar um
+			método do tipo <emphasis>setter</emphasis> na classe. Primeiro altere a interface:
+		</para>
+		<programlisting role="JAVA"><![CDATA[public interface ExemploMBean {
+
+	String getAtributo();
+	
+	void setAtributo(String atributo);
+
+}]]></programlisting>
+		<para>
+			E em seguida implemente todos os métodos na classe:
+		</para>
+		<programlisting role="JAVA"><![CDATA[@MBean
+public class Exemplo implements ExemploMBean {
+
+	private String atributo;
+
+	public String getAtributo() {
+		return atributo;
+	}
+
+	public void setAtributo(String atributo) {
+		this.atributo = atributo;
+	}
+
+}]]></programlisting>
+		<para>
+			Desta forma, o valor do atributo <literal>Exemplo</literal> do MBean poderá ser
+			consultado e ou modificado via JMX.
+		</para>
+	</section>
+	
+</chapter>
