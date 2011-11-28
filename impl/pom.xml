@@ -54,10 +54,6 @@
 	<name>JUnit Component</name>
 	<description />
 
-	<properties>
-		<category>Teste</category>
-	</properties>
-
 	<build>
 		<plugins>
 			<plugin>
