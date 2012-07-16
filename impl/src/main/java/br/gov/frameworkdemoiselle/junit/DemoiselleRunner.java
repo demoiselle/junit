@@ -40,7 +40,10 @@ import org.jboss.weld.environment.se.StartMain;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.InitializationError;
+import org.junit.runners.model.Statement;
 
+import br.gov.frameworkdemoiselle.internal.bootstrap.ShutdownBootstrap;
+import br.gov.frameworkdemoiselle.internal.bootstrap.StartupBootstrap;
 import br.gov.frameworkdemoiselle.util.Beans;
 
 public class DemoiselleRunner extends BlockJUnit4ClassRunner {
@@ -64,8 +67,21 @@ public class DemoiselleRunner extends BlockJUnit4ClassRunner {
 		super.run(notifier);
 	}
 
-	//@Override
 	protected Object createTest() throws Exception {
 		return Beans.getReference(getTestClass().getJavaClass());
+	}
+
+	@Override
+	protected Statement withBeforeClasses(Statement statement) {
+		StartupBootstrap.startup();
+		return super.withBeforeClasses(statement);
+	}
+
+	@Override
+	protected Statement withAfterClasses(Statement statement) {
+		Statement result = super.withAfterClasses(statement);
+		ShutdownBootstrap.shutdown();
+
+		return result;
 	}
 }
