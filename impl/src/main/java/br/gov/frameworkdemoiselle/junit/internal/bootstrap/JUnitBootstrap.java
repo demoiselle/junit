@@ -45,7 +45,7 @@ import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.ProcessAnnotatedType;
 
-import br.gov.frameworkdemoiselle.internal.producer.LocaleProducer;
+import br.gov.frameworkdemoiselle.internal.producer.SeLocaleProducer;
 
 public class JUnitBootstrap implements Extension {
 
@@ -54,7 +54,7 @@ public class JUnitBootstrap implements Extension {
 
 		for (AnnotatedMethod<?> am : annotatedType.getMethods()) {
 			if (am.isAnnotationPresent(Produces.class) && am.getJavaMember().getReturnType() == Locale.class
-					&& am.getDeclaringType().getJavaClass() != LocaleProducer.class) {
+					&& am.getDeclaringType().getJavaClass() != SeLocaleProducer.class) {
 				event.veto();
 			}
 		}
