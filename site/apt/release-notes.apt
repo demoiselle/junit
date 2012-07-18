@@ -38,6 +38,12 @@
 
 Notas de Versão
 
+* v2.3.0-BETA1
+
+  * {{{http://sourceforge.net/apps/mantisbt/demoiselle/view.php?id=0000801}801}} [Bug] Correção da falha ao tentar processar métodos anotados com @Shutdown.
+
+  * {{{http://sourceforge.net/apps/mantisbt/demoiselle/view.php?id=0000802}802}} [Improvement] Compatibilidade com a versão 2.3 do Demoiselle Framework.
+
 * {{{../2.2.1}v2.2.1}}
 
   * {{{http://sourceforge.net/apps/mantisbt/demoiselle/view.php?id=549}0000549}}: Compatibilidade com a versão 2 do demoiselle
