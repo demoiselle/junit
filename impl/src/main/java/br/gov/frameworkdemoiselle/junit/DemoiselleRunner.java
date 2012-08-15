@@ -42,8 +42,8 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 
-import br.gov.frameworkdemoiselle.internal.bootstrap.ShutdownBootstrap;
-import br.gov.frameworkdemoiselle.internal.bootstrap.StartupBootstrap;
+import br.gov.frameworkdemoiselle.internal.bootstrap.BeforeApplicationFinalization;
+import br.gov.frameworkdemoiselle.internal.bootstrap.BeforeApplicationInitialization;
 import br.gov.frameworkdemoiselle.util.Beans;
 
 public class DemoiselleRunner extends BlockJUnit4ClassRunner {
@@ -73,14 +73,28 @@ public class DemoiselleRunner extends BlockJUnit4ClassRunner {
 
 	@Override
 	protected Statement withBeforeClasses(Statement statement) {
-		StartupBootstrap.startup();
+		Beans.getBeanManager().fireEvent(new BeforeApplicationInitialization() {
+
+			@Override
+			public boolean removeProcessors() {
+				return false;
+			}
+		});
+
 		return super.withBeforeClasses(statement);
 	}
 
 	@Override
 	protected Statement withAfterClasses(Statement statement) {
 		Statement result = super.withAfterClasses(statement);
-		ShutdownBootstrap.shutdown();
+
+		Beans.getBeanManager().fireEvent(new BeforeApplicationFinalization() {
+
+			@Override
+			public boolean removeProcessors() {
+				return false;
+			}
+		});
 
 		return result;
 	}
