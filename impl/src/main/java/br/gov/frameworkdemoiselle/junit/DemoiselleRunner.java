@@ -39,8 +39,8 @@ package br.gov.frameworkdemoiselle.junit;
 import org.jboss.weld.environment.se.StartMain;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
+import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
-import org.junit.runners.model.Statement;
 
 import br.gov.frameworkdemoiselle.internal.bootstrap.BeforeApplicationFinalization;
 import br.gov.frameworkdemoiselle.internal.bootstrap.BeforeApplicationInitialization;
@@ -49,6 +49,8 @@ import br.gov.frameworkdemoiselle.util.Beans;
 public class DemoiselleRunner extends BlockJUnit4ClassRunner {
 
 	private static boolean containerInitialized = false;
+
+	private static Integer count = 0;
 
 	public DemoiselleRunner(Class<?> testClass) throws InitializationError {
 		super(testClass);
@@ -59,20 +61,33 @@ public class DemoiselleRunner extends BlockJUnit4ClassRunner {
 		if (!containerInitialized) {
 			StartMain.main(null);
 			containerInitialized = true;
+
+			startup();
 		}
 	}
 
 	@Override
-	public void run(RunNotifier notifier) {
-		super.run(notifier);
+	protected void finalize() throws Throwable {
+		shutdown();
+		super.finalize();
+	}
+
+	@Override
+	protected void runChild(FrameworkMethod method, RunNotifier notifier) {
+		super.runChild(method, notifier);
+
+		synchronized (count) {
+			if (++count == this.testCount()) {
+				shutdown();
+			}
+		}
 	}
 
 	protected Object createTest() throws Exception {
 		return Beans.getReference(getTestClass().getJavaClass());
 	}
 
-	@Override
-	protected Statement withBeforeClasses(Statement statement) {
+	private void startup() {
 		Beans.getBeanManager().fireEvent(new BeforeApplicationInitialization() {
 
 			@Override
@@ -80,14 +95,9 @@ public class DemoiselleRunner extends BlockJUnit4ClassRunner {
 				return false;
 			}
 		});
-
-		return super.withBeforeClasses(statement);
 	}
 
-	@Override
-	protected Statement withAfterClasses(Statement statement) {
-		Statement result = super.withAfterClasses(statement);
-
+	private void shutdown() {
 		Beans.getBeanManager().fireEvent(new BeforeApplicationFinalization() {
 
 			@Override
@@ -95,7 +105,5 @@ public class DemoiselleRunner extends BlockJUnit4ClassRunner {
 				return false;
 			}
 		});
-
-		return result;
 	}
 }
