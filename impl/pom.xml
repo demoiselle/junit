@@ -104,6 +104,6 @@
 	</repositories>
 
 	<properties>
-		<demoiselle.version>2.3.0-BETA2</demoiselle.version>
+		<demoiselle.version>2.3.0-BETA3-SNAPSHOT</demoiselle.version>
 	</properties>
 </project>
