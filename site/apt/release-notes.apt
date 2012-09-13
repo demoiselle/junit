@@ -38,7 +38,11 @@
 
 Notas de Versão
 
-* v2.3.0-BETA1
+* v2.3.0-BETA2
+
+	* {{{https://sourceforge.net/apps/mantisbt/demoiselle/view.php?id=0000843}843}} [Improvement] Lançamento dos eventos AfterStartupProccess e AfterShutdownProccess.
+
+* {{{../2.3.0-BETA1}v2.3.0-BETA1}} 
 
   * {{{http://sourceforge.net/apps/mantisbt/demoiselle/view.php?id=0000801}801}} [Bug] Correção da falha ao tentar processar métodos anotados com @Shutdown.
 
