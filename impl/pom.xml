@@ -67,12 +67,12 @@
 			<dependency>
 				<groupId>br.gov.frameworkdemoiselle</groupId>
 				<artifactId>demoiselle-core</artifactId>
-				<version>${demoiselle.version}</version>
+				<version>${demoiselle.framework.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>br.gov.frameworkdemoiselle</groupId>
 				<artifactId>demoiselle-se</artifactId>
-				<version>${demoiselle.version}</version>
+				<version>${demoiselle.framework.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -104,6 +104,6 @@
 	</repositories>
 
 	<properties>
-		<demoiselle.version>2.3.0-RC1-SNAPSHOT</demoiselle.version>
+		<demoiselle.framework.version>2.3.0-RC1</demoiselle.framework.version>		
 	</properties>
 </project>
