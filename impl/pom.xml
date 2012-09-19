@@ -46,8 +46,8 @@
 	<parent>
 		<groupId>br.gov.frameworkdemoiselle</groupId>
 		<artifactId>demoiselle-parent</artifactId>
-		<version>4</version>
-		<relativePath>../../internal/parent/demoiselle/pom.xml</relativePath>
+		<version>6-SNAPSHOT</version>
+		<relativePath>../../internal/parent/demoiselle</relativePath>
 	</parent>
 
 	<name>JUnit Component</name>
@@ -66,13 +66,15 @@
 		<dependencies>
 			<dependency>
 				<groupId>br.gov.frameworkdemoiselle</groupId>
-				<artifactId>demoiselle-core</artifactId>
+				<artifactId>demoiselle-framework-bom</artifactId>
 				<version>${demoiselle.framework.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 			<dependency>
-				<groupId>br.gov.frameworkdemoiselle</groupId>
-				<artifactId>demoiselle-se</artifactId>
-				<version>${demoiselle.framework.version}</version>
+				<groupId>org.jboss.weld.se</groupId>
+				<artifactId>weld-se-core</artifactId>
+				<version>${weld.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -104,6 +106,7 @@
 	</repositories>
 
 	<properties>
-		<demoiselle.framework.version>2.3.0-RC1</demoiselle.framework.version>		
+		<demoiselle.framework.version>2.3.0-RC2-SNAPSHOT</demoiselle.framework.version>
+		<weld.version>1.1.8.Final</weld.version>
 	</properties>
 </project>
