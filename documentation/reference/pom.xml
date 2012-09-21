@@ -49,8 +49,10 @@
 		<relativePath>../../../internal/parent/documentation</relativePath>
 	</parent>
 
-	<name>Reference Documentation</name>
-	<description />
+	<name>Demoiselle JUnit Reference Documentation</name>
+	<description>
+		Demoiselle JUnit Reference Documentation
+	</description>
 
 	<build>
 		<plugins>
