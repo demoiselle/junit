@@ -40,12 +40,12 @@ Notas de Versão
 
 * v2.3.0
 
-  * {{{https://sourceforge.net/apps/mantisbt/demoiselle/view.php?id=0000844}801}} [Bug] Correção dos pacotes dos eventos AfterStartupProccess e AfterShutdownProcces.
-
-  * {{{https://sourceforge.net/apps/mantisbt/demoiselle/view.php?id=0000843}843}} [Improvement] Lançamento dos eventos AfterStartupProccess e AfterShutdownProccess.
+  * {{{http://sourceforge.net/apps/mantisbt/demoiselle/view.php?id=0000844}844}} [Bug] Correção dos pacotes dos eventos AfterStartupProccess e AfterShutdownProcces.
 
   * {{{http://sourceforge.net/apps/mantisbt/demoiselle/view.php?id=0000801}801}} [Bug] Correção da falha ao tentar processar métodos anotados com @Shutdown.
 
+  * {{{http://sourceforge.net/apps/mantisbt/demoiselle/view.php?id=0000843}843}} [Improvement] Lançamento dos eventos AfterStartupProccess e AfterShutdownProccess.
+  
   * {{{http://sourceforge.net/apps/mantisbt/demoiselle/view.php?id=0000802}802}} [Improvement] Compatibilidade com a versão 2.3 do Demoiselle Framework.
 
 * {{{../2.2.1}v2.2.1}}
