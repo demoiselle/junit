@@ -101,6 +101,5 @@
 	<properties>
 		<project.alias>junit</project.alias>
 		<category>Teste</category>
-		<project.nextVersion>2.3.0-SNAPSHOT</project.nextVersion>
 	</properties>
 </project>
