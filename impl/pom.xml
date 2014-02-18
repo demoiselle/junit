@@ -40,7 +40,7 @@
 
 	<groupId>br.gov.frameworkdemoiselle.component</groupId>
 	<artifactId>demoiselle-junit</artifactId>
-	<version>2.3.1-SNAPSHOT</version>
+	<version>2.3.1</version>
 	<packaging>jar</packaging>
 
 	<parent>
@@ -115,4 +115,8 @@
 			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
 		</repository>
 	</repositories>
+
+  <scm>
+    <tag>2.3.1</tag>
+  </scm>
 </project>
