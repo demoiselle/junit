@@ -42,7 +42,6 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
 
-import br.gov.frameworkdemoiselle.lifecycle.AfterShutdownProccess;
 import br.gov.frameworkdemoiselle.lifecycle.AfterStartupProccess;
 import br.gov.frameworkdemoiselle.util.Beans;
 
@@ -85,7 +84,7 @@ public class DemoiselleRunner extends BlockJUnit4ClassRunner {
 	}
 
 	private void shutdown() {
-		Beans.getBeanManager().fireEvent(new AfterShutdownProccess() {
+		Beans.getBeanManager().fireEvent(new Object() {
 		});
 	}
 }
