@@ -37,13 +37,12 @@
 package br.gov.frameworkdemoiselle.junit;
 
 import org.jboss.weld.environment.se.Weld;
+import org.jboss.weld.environment.se.WeldContainer;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
 
-import br.gov.frameworkdemoiselle.lifecycle.AfterShutdownProccess;
-import br.gov.frameworkdemoiselle.lifecycle.AfterStartupProccess;
 import br.gov.frameworkdemoiselle.util.Beans;
 
 public class DemoiselleRunner extends BlockJUnit4ClassRunner {
@@ -67,9 +66,9 @@ public class DemoiselleRunner extends BlockJUnit4ClassRunner {
 	@Override
 	public void run(RunNotifier notifier) {
 		Weld weld = new Weld();
-		weld.initialize();
+		WeldContainer container = weld.initialize();
 
-		this.startup();
+		this.startup(container);
 		super.run(notifier);
 
 		weld.shutdown();
@@ -79,13 +78,14 @@ public class DemoiselleRunner extends BlockJUnit4ClassRunner {
 		return Beans.getReference(getTestClass().getJavaClass());
 	}
 
-	private void startup() {
-		Beans.getBeanManager().fireEvent(new AfterStartupProccess() {
+	private void startup(WeldContainer container) {
+		Beans.setBeanManager(container.getBeanManager());
+		Beans.getBeanManager().fireEvent(new Object() {
 		});
 	}
 
 	private void shutdown() {
-		Beans.getBeanManager().fireEvent(new AfterShutdownProccess() {
+		Beans.getBeanManager().fireEvent(new Object() {
 		});
 	}
 }
